@@ -4,7 +4,7 @@
 set -e
 
 ENV_FILE="/opt/deploy/deploy.env"
-APP_DIR="/opt/ai-knowledge"
+APP_DIR="/opt/yuAiGraph"
 REPO_DIR="$APP_DIR/repo"
 
 # ── 检查配置文件 ───────────────────────────────────────────────
@@ -86,14 +86,14 @@ echo "【Nginx】✅ 配置已生效"
 
 # ── PM2 启动/重启 ──────────────────────────────────────────────
 echo "【前端】启动服务..."
-if pm2 describe ai-knowledge > /dev/null 2>&1; then
-    pm2 reload ai-knowledge --update-env
+if pm2 describe yuAiGraph > /dev/null 2>&1; then
+    pm2 reload yuAiGraph --update-env
 else
-    pm2 start npm --name "ai-knowledge" -- start
+    pm2 start npm --name "yuAiGraph" -- start
     pm2 save
     # 设置开机自启（只需第一次）
     pm2 startup | grep "sudo" | bash 2>/dev/null || true
 fi
 
 echo "【前端】✅ 启动成功"
-echo "        日志: pm2 logs ai-knowledge"
+echo "        日志: pm2 logs yuAiGraph"
