@@ -46,10 +46,18 @@ npm run build
 
 # ── 配置 Nginx ────────────────────────────────────────────────
 echo "【Nginx】更新配置..."
+# 可选：在 deploy.env 里写 SERVER_PUBLIC_IP=47.x.x.x，用 IP 访问时也能命中同一站点
+# shellcheck disable=SC2154
+SERVER_NAMES="yudev.top www.yudev.top"
+if [ -n "${SERVER_PUBLIC_IP:-}" ]; then
+    SERVER_NAMES="$SERVER_NAMES $SERVER_PUBLIC_IP"
+fi
+
 cat > /etc/nginx/conf.d/ai-app.conf << NGINXEOF
+# default_server：用公网 IP 直接访问时也会走 Next，避免落到别的默认站点导致静态资源 500
 server {
-    listen 80;
-    server_name yudev.top www.yudev.top;
+    listen 80 default_server;
+    server_name $SERVER_NAMES;
     client_max_body_size 100m;
 
     location / {
@@ -60,6 +68,7 @@ server {
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_cache_bypass \$http_upgrade;
     }
 }
@@ -84,16 +93,14 @@ NGINXEOF
 nginx -t && systemctl reload nginx
 echo "【Nginx】✅ 配置已生效"
 
-# ── PM2 启动/重启 ──────────────────────────────────────────────
+# ── PM2 启动/重启（必须指定 cwd，否则重启后可能在错误目录，/_next/static 会 500）──
 echo "【前端】启动服务..."
 if pm2 describe yuAiGraph > /dev/null 2>&1; then
-    pm2 reload yuAiGraph --update-env
-else
-    pm2 start npm --name "yuAiGraph" -- start
-    pm2 save
-    # 设置开机自启（只需第一次）
-    pm2 startup | grep "sudo" | bash 2>/dev/null || true
+    pm2 delete yuAiGraph 2>/dev/null || true
 fi
+pm2 start npm --name "yuAiGraph" --cwd "$REPO_DIR" -- start
+pm2 save
+pm2 startup | grep "sudo" | bash 2>/dev/null || true
 
 echo "【前端】✅ 启动成功"
 echo "        日志: pm2 logs yuAiGraph"
