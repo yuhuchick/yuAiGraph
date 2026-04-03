@@ -38,11 +38,20 @@ JAVA_API_BASE=${JAVA_API_BASE:-http://localhost:8080}
 FRONTENV
 
 # ── 安装依赖并构建 ─────────────────────────────────────────────
+# 小内存 ECS 上 npm ci / next build 易被 OOM Kill（进程 exit 显示 Killed）。
+# 建议服务器至少 2G swap，例如：
+#   fallocate -l 2G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile
+# 可在 deploy.env 中覆盖：
+#   NODE_OPTIONS_CI="--max-old-space-size=512"
+#   NODE_OPTIONS_BUILD="--max-old-space-size=1024"
 echo "【前端】安装依赖..."
-npm ci --prefer-offline
+if [ -n "${NODE_OPTIONS_CI:-}" ]; then export NODE_OPTIONS="$NODE_OPTIONS_CI"; else export NODE_OPTIONS="--max-old-space-size=768"; fi
+npm ci --prefer-offline --no-audit --no-fund
 
 echo "【前端】构建中..."
+if [ -n "${NODE_OPTIONS_BUILD:-}" ]; then export NODE_OPTIONS="$NODE_OPTIONS_BUILD"; else export NODE_OPTIONS="--max-old-space-size=1024"; fi
 npm run build
+unset NODE_OPTIONS
 
 # ── 配置 Nginx ────────────────────────────────────────────────
 echo "【Nginx】更新配置..."
