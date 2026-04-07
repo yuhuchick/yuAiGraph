@@ -9,7 +9,12 @@ export async function POST(
 ) {
   const { noteId } = await params;
   const token = request.headers.get("authorization") ?? "";
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ message: "请求体须为合法 JSON" }, { status: 400 });
+  }
 
   const res = await fetch(`${JAVA}/api/v1/notes/${noteId}/share`, {
     method: "POST",
