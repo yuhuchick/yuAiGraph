@@ -1,9 +1,9 @@
 import { GraphData, NoteItem } from "@/lib/types";
 
 export const mockNotes: NoteItem[] = [
-  { id: "note-1", name: "人工智能导论",        createdAt: "2026-04-01", nodeCount: 14 },
-  { id: "note-2", name: "前端性能优化实践",    createdAt: "2026-03-28", nodeCount: 12 },
-  { id: "note-3", name: "React 状态管理深度解析", createdAt: "2026-03-20", nodeCount: 11 },
+  { id: "note-1", name: "人工智能导论", createdAt: "2026-04-01", nodeCount: 17, category: "学术" },
+  { id: "note-2", name: "前端性能优化实践", createdAt: "2026-03-28", nodeCount: 12, category: "技术" },
+  { id: "note-3", name: "React 状态管理深度解析", createdAt: "2026-03-20", nodeCount: 11, category: "技术" },
 ];
 
 export const mockGraphMap: Record<string, GraphData> = {
@@ -55,6 +55,37 @@ export const mockGraphMap: Record<string, GraphData> = {
       { source: "a4",  target: "a11", relationship: "驱动" },
       { source: "a15", target: "a12", relationship: "支撑" },
       { source: "a17", target: "a3",  relationship: "加速" },
+    ],
+    /** 演示用：模拟 AI 解析生成的语义图表（与「文档要点」区域对应） */
+    insightCharts: [
+      {
+        id: "demo_c1",
+        title: "AI 子领域着墨对比（示例）",
+        rationale: "柱状图对比文中不同技术方向的相对着墨强度。",
+        chartType: "bar",
+        categories: ["机器学习", "深度学习", "NLP", "计算机视觉", "强化学习"],
+        series: [{ name: "相对权重", data: [8, 6, 5, 4, 3] }],
+      },
+      {
+        id: "demo_c2",
+        title: "深度学习里程碑（示意）",
+        rationale: "表格归纳文中所述关键节点，比纯结构统计更贴近阅读。",
+        chartType: "table",
+        tableColumns: ["阶段", "代表事件", "意义"],
+        tableRows: [
+          ["兴起", "2012 AlexNet", "深度学习在视觉任务上取得突破，引发新一轮研究热潮。"],
+          ["工程化", "2017 Transformer", "注意力机制成为 NLP 与多模态的基础构件。"],
+          ["规模化", "2020+ 大模型", "算力与数据驱动下，通用能力与行业落地并行。"],
+        ],
+      },
+      {
+        id: "demo_c3",
+        title: "深度学习关注度变化（示意）",
+        rationale: "折线表示关键年份上的讨论热度趋势，对应文中的时间叙述。",
+        chartType: "line",
+        categories: ["2012", "2017", "2020", "2022", "2024"],
+        series: [{ name: "热度指数", data: [2, 5, 6, 8, 9] }],
+      },
     ],
   },
 

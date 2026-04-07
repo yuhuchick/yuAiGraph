@@ -2,6 +2,7 @@ import {
   AuthResponse,
   GraphData,
   NoteItem,
+  NoteListResponse,
   ParseJobInfo,
   SharedGraphData,
   ShareResponse,
@@ -102,9 +103,46 @@ export const api = {
 
   // ─── 笔记模块 ─────────────────────────────────────────────────
 
+  fetchNotesPage(params?: {
+    page?: number;
+    size?: number;
+    category?: string;
+    keyword?: string;
+  }): Promise<NoteListResponse> {
+    const sp = new URLSearchParams();
+    if (params?.page != null) sp.set("page", String(params.page));
+    if (params?.size != null) sp.set("size", String(params.size));
+    if (params?.category) sp.set("category", params.category);
+    if (params?.keyword) sp.set("keyword", params.keyword);
+    const qs = sp.toString();
+    return authRequest<NoteListResponse | null>(`/api/notes${qs ? `?${qs}` : ""}`).then(
+      (d) =>
+        d ?? {
+          items: [],
+          total: 0,
+          page: 0,
+          size: 10,
+          totalPages: 0,
+          allNotesCount: 0,
+          totalNodeCount: 0,
+          notesThisMonth: 0,
+        },
+    );
+  },
+
+  /** 兼容：拉取前 500 条（供笔记详情页匹配标题等） */
   fetchNotes(): Promise<NoteItem[]> {
-    return authRequest<NoteItem[] | null>("/api/notes")
-      .then((d) => d ?? []);
+    return this.fetchNotesPage({ page: 0, size: 500 }).then((r) => r.items);
+  },
+
+  fetchNoteCategories(): Promise<string[]> {
+    return authRequest<string[] | null>("/api/note-categories").then((d) => d ?? []);
+  },
+
+  cancelParseJob(jobId: string) {
+    return authRequest<null>(`/api/ai/parse-cancel/${encodeURIComponent(jobId)}`, {
+      method: "POST",
+    });
   },
 
   deleteNote(noteId: string) {

@@ -72,6 +72,19 @@ body {
   to   { opacity: 1; transform: scale(1); }
 }
 
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* 首页 Hero 科技网格底纹 */
+.home-hero-grid {
+  background-image:
+    linear-gradient(to right, rgb(99 102 241 / 0.065) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(99 102 241 / 0.065) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
 .animate-in {
   animation: fade-in 0.22s ease both;
 }
@@ -80,6 +93,128 @@ body {
 }
 .animate-scale-in {
   animation: scale-in 0.2s ease both;
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shimmer {
+    animation: none;
+  }
+}
+
+/* 首页 Pipeline：数据总线 — 虚线脉冲沿导线流动（非进度条） */
+@keyframes home-pipeline-dash-a {
+  to {
+    stroke-dashoffset: -36;
+  }
+}
+
+@keyframes home-pipeline-dash-b {
+  to {
+    stroke-dashoffset: 44;
+  }
+}
+
+@keyframes home-pipeline-node {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.14);
+  }
+}
+
+.home-pipeline-flow-a {
+  stroke-dasharray: 5 9;
+  stroke-dashoffset: 0;
+  animation: home-pipeline-dash-a 0.62s linear infinite;
+}
+
+.home-pipeline-flow-b {
+  stroke-dasharray: 10 14;
+  stroke-dashoffset: 0;
+  animation: home-pipeline-dash-b 0.88s linear infinite;
+}
+
+.home-pipeline-node-g {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: home-pipeline-node 1.75s ease-in-out infinite;
+}
+
+.home-pipeline-node-g--1 {
+  animation-delay: 0s;
+}
+
+.home-pipeline-node-g--2 {
+  animation-delay: 0.32s;
+}
+
+.home-pipeline-node-g--3 {
+  animation-delay: 0.64s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-pipeline-flow-a,
+  .home-pipeline-flow-b,
+  .home-pipeline-node-g,
+  .home-pipeline-node-g--1,
+  .home-pipeline-node-g--2,
+  .home-pipeline-node-g--3 {
+    animation: none;
+  }
+
+  .home-pipeline-flow-a,
+  .home-pipeline-flow-b {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 0;
+    stroke-opacity: 0.55;
+  }
+
+  .home-pipeline-node-g {
+    opacity: 0.75;
+    transform: none;
+  }
+}
+
+/* 首页：文档 → AI → 可视化 流式导线 */
+@keyframes home-flow-dash-a {
+  to {
+    stroke-dashoffset: -32;
+  }
+}
+
+@keyframes home-flow-dash-b {
+  to {
+    stroke-dashoffset: 44;
+  }
+}
+
+.home-flow-stream-a {
+  stroke-dasharray: 5 11;
+  stroke-dashoffset: 0;
+  animation: home-flow-dash-a 0.68s linear infinite;
+}
+
+.home-flow-stream-b {
+  stroke-dasharray: 8 15;
+  stroke-dashoffset: 0;
+  animation: home-flow-dash-b 0.92s linear infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-flow-stream-a,
+  .home-flow-stream-b {
+    animation: none;
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 0;
+  }
 }
 
 /* Glass card */

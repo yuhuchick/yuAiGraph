@@ -2,7 +2,23 @@
 
 import type { Components } from "react-markdown";
 import Markdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 import remarkGfm from "remark-gfm";
+
+/** 流式输出时若代码围栏未闭合，整段会被当成普通文本；补全闭合围栏以便中途也能解析 */
+function closeUnclosedFencedCode(source: string): string {
+  const lines = source.split("\n");
+  let inFence = false;
+  for (const line of lines) {
+    if (/^\s*```/.test(line)) inFence = !inFence;
+  }
+  if (!inFence) return source;
+  return source.endsWith("\n") ? `${source}\`\`\`` : `${source}\n\`\`\``;
+}
+
+function normalizeMarkdownInput(source: string): string {
+  return source.replace(/\r\n/g, "\n");
+}
 
 const mdComponents: Components = {
   p: ({ children }) => (
@@ -45,6 +61,19 @@ const mdComponents: Components = {
     <blockquote className="my-2 border-l-2 border-indigo-300 pl-3 text-zinc-600">{children}</blockquote>
   ),
   hr: () => <hr className="my-3 border-zinc-200" />,
+  br: () => <br />,
+  del: ({ children }) => (
+    <del className="text-zinc-500 line-through decoration-zinc-400">{children}</del>
+  ),
+  img: ({ src, alt }) => (
+    // eslint-disable-next-line @next/next/no-img-element -- 助手回复中的外链图，无 Next Image 域名配置
+    <img
+      src={src}
+      alt={alt ?? ""}
+      className="my-2 max-h-48 max-w-full rounded-lg border border-zinc-200 object-contain"
+      loading="lazy"
+    />
+  ),
   a: ({ href, children }) => (
     <a
       href={href}
@@ -93,18 +122,25 @@ const mdComponents: Components = {
 
 interface Props {
   content: string;
+  /** 流式生成中：补全未闭合的 ``` 围栏，避免列表/加粗等整段无法解析 */
+  streaming?: boolean;
 }
 
-/** AI 助手气泡内 Markdown（GFM：表格、删除线、任务列表等） */
-export function AssistantMarkdown({ content }: Props) {
+const remarkPlugins = [remarkGfm, remarkBreaks];
+
+/** AI 助手气泡内 Markdown（GFM + remark-breaks 单换行硬换行，适配模型常见输出） */
+export function AssistantMarkdown({ content, streaming }: Props) {
   if (!content.trim()) {
     return null;
   }
 
+  let text = normalizeMarkdownInput(content);
+  if (streaming) text = closeUnclosedFencedCode(text);
+
   return (
     <div className="assistant-md text-sm leading-relaxed text-zinc-800 [&_pre_code]:bg-transparent [&_pre_code]:p-0">
-      <Markdown remarkPlugins={[remarkGfm]} components={mdComponents}>
-        {content}
+      <Markdown remarkPlugins={remarkPlugins} components={mdComponents}>
+        {text}
       </Markdown>
     </div>
   );

@@ -4,7 +4,7 @@ export type NodeType = "concept" | "person" | "event" | "object";
 
 export interface ParseJobInfo {
   jobId: string;
-  status: "PENDING" | "PROCESSING" | "DONE" | "FAILED";
+  status: "PENDING" | "PROCESSING" | "DONE" | "FAILED" | "CANCELLED";
   progress: number;
   stage: string;
   fileName: string;
@@ -59,7 +59,7 @@ export interface InsightSeries {
 
 /**
  * AI 根据文档语义生成的单张图表规格（与 Java InsightChartSpecDto 对齐）。
- * chartType：pie | bar | line | radar | scatter
+ * chartType：pie | bar | line | radar | scatter | table
  */
 export interface InsightChartSpec {
   id: string;
@@ -70,6 +70,9 @@ export interface InsightChartSpec {
   series?: InsightSeries[];
   /** scatter：[[x,y], ...] */
   scatterPoints?: number[][];
+  /** table：表头与行数据 */
+  tableColumns?: string[];
+  tableRows?: string[][];
 }
 
 export interface GraphData {
@@ -84,4 +87,18 @@ export interface NoteItem {
   name: string;
   createdAt: string;
   nodeCount: number;
+  /** 分类，空字符串表示其他 */
+  category?: string;
+}
+
+/** 与 Java NoteListResponse 对齐 */
+export interface NoteListResponse {
+  items: NoteItem[];
+  total: number;
+  page: number;
+  size: number;
+  totalPages: number;
+  allNotesCount: number;
+  totalNodeCount: number;
+  notesThisMonth: number;
 }

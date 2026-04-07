@@ -8,6 +8,7 @@ import { ChartExportProvider } from "@/components/graph/chart-export-context";
 import { NoteGraphStack } from "@/components/graph/note-graph-stack";
 import { VoiceQA } from "@/components/qa/voice-qa";
 import { ShareDialog } from "@/components/note/share-dialog";
+import { DeleteNoteButton } from "@/components/note/delete-note-button";
 import { ExportMenu } from "@/components/note/export-menu";
 import { api, ApiError } from "@/lib/api";
 import { GraphData, NoteItem } from "@/lib/types";
@@ -81,11 +82,17 @@ export default function NoteDetailPage() {
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <ExportMenu
                 noteName={note?.name ?? "图谱"}
                 graphData={graphData}
                 svgId={GRAPH_SVG_ID}
+              />
+              <DeleteNoteButton
+                noteId={noteId}
+                noteName={note?.name ?? "笔记"}
+                redirectTo="/dashboard"
+                variant="text"
               />
               <button
                 type="button"

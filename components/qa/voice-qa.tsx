@@ -21,14 +21,21 @@ function nextId() {
 
 interface Props {
   noteId?: string;
+  /** 覆盖默认的快捷提问（如演示页按主题切换） */
+  suggestions?: string[];
+  /** 首条助手欢迎语 */
+  welcomeMessage?: string;
 }
 
-export function VoiceQA({ noteId }: Props) {
+export function VoiceQA({ noteId, suggestions: suggestionsProp, welcomeMessage }: Props) {
+  const welcome =
+    welcomeMessage ??
+    "你好！我是 AI 知识助手。你可以针对当前图谱提问，例如：「机器学习和深度学习是什么关系？」";
   const [messages, setMessages] = useState<Message[]>([
     {
       id: nextId(),
       role: "assistant",
-      content: "你好！我是 AI 知识助手。你可以针对当前图谱提问，例如：「机器学习和深度学习是什么关系？」",
+      content: welcome,
     },
   ]);
   const [input, setInput] = useState("");
@@ -110,7 +117,8 @@ export function VoiceQA({ noteId }: Props) {
     send(input);
   };
 
-  const suggestions = ["深度学习的特点是什么？", "机器学习包含哪些分支？", "两个节点之间的关系是什么？"];
+  const suggestions =
+    suggestionsProp ?? ["深度学习的特点是什么？", "机器学习包含哪些分支？", "两个节点之间的关系是什么？"];
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
@@ -156,7 +164,7 @@ export function VoiceQA({ noteId }: Props) {
                 </span>
               ) : msg.role === "assistant" ? (
                 <>
-                  <AssistantMarkdown content={msg.content} />
+                  <AssistantMarkdown content={msg.content} streaming={msg.streaming} />
                   {msg.streaming && (
                     <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-indigo-500 align-middle" />
                   )}

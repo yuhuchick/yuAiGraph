@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { GitHubRepoLinks } from "@/components/layout/github-repo-links";
 import { getToken, getUser, isTokenExpired, logout, logoutSessionRedirect } from "@/lib/auth";
 import type { UserInfo } from "@/lib/auth";
 
@@ -89,6 +90,8 @@ export function AppHeader() {
               </Link>
             );
           })}
+
+          <GitHubRepoLinks className="ml-2" />
 
           <div className="ml-1 h-4 w-px bg-zinc-200" />
 

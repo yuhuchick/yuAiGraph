@@ -39,30 +39,27 @@ export function ExportMenu({ noteName, graphData, svgId }: Props) {
 
     const clone = svgEl.cloneNode(true) as SVGSVGElement;
     clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+    const cw = svgEl.dataset.graphCw ? parseFloat(svgEl.dataset.graphCw) : NaN;
+    const ch = svgEl.dataset.graphCh ? parseFloat(svgEl.dataset.graphCh) : NaN;
+    if (Number.isFinite(cw) && Number.isFinite(ch) && cw > 0 && ch > 0) {
+      clone.setAttribute("viewBox", `0 0 ${cw} ${ch}`);
+      clone.setAttribute("width", String(Math.round(cw)));
+      clone.setAttribute("height", String(Math.round(ch)));
+    }
+    clone.removeAttribute("data-graph-cw");
+    clone.removeAttribute("data-graph-ch");
     const str = new XMLSerializer().serializeToString(clone);
     const blob = new Blob([str], { type: "image/svg+xml;charset=utf-8" });
     download(blob, `${safeName}-知识图谱.svg`);
     setOpen(false);
   };
 
-  const exportChartsZip = async () => {
-    if (!chartExport || chartCount === 0) return;
-    setBusy(true);
-    try {
-      const blob = await chartExport.buildChartsZip(safeName);
-      download(blob, `${safeName}-数据图表.zip`);
-    } finally {
-      setBusy(false);
-      setOpen(false);
-    }
-  };
-
-  const exportFullZip = async () => {
+  const exportPdf = async () => {
     if (!chartExport) return;
     setBusy(true);
     try {
-      const blob = await chartExport.buildFullZip(safeName, graphData, svgId);
-      download(blob, `${safeName}-完整导出.zip`);
+      const blob = await chartExport.buildPdf(safeName, graphData, svgId);
+      download(blob, `${safeName}-可视化导出.pdf`);
     } finally {
       setBusy(false);
       setOpen(false);
@@ -80,7 +77,7 @@ export function ExportMenu({ noteName, graphData, svgId }: Props) {
         <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
           <path d="M10 7v3H2V7M6 1v7M3.5 4.5 6 2l2.5 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        {busy ? "打包中…" : "导出"}
+        {busy ? "生成中…" : "导出"}
         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className={`transition-transform ${open ? "rotate-180" : ""}`}>
           <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -91,7 +88,7 @@ export function ExportMenu({ noteName, graphData, svgId }: Props) {
           <div className="border-b border-zinc-100 px-3 py-2">
             <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">导出选项</p>
             <p className="mt-0.5 text-[10px] leading-snug text-zinc-500">
-              JSON 含节点、关系与 insightCharts；ZIP 可含下方 ECharts 图
+              PDF 汇总知识图谱截图、全部图表与表格；JSON / SVG 可单独下载
             </p>
           </div>
           <div className="p-1">
@@ -118,35 +115,18 @@ export function ExportMenu({ noteName, graphData, svgId }: Props) {
               </span>
             </button>
 
-            {chartExport && chartCount > 0 && (
-              <button
-                type="button"
-                onClick={() => void exportChartsZip()}
-                disabled={busy}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-zinc-700 hover:bg-zinc-50 disabled:opacity-50"
-              >
-                <span className="text-sm">📊</span>
-                <span>
-                  <span className="font-medium">数据图表 ZIP</span>
-                  <span className="mt-0.5 block font-mono text-[10px] text-zinc-400">
-                    {chartCount} 张 PNG（要点 + 衍生）
-                  </span>
-                </span>
-              </button>
-            )}
-
             {chartExport && (
               <button
                 type="button"
-                onClick={() => void exportFullZip()}
+                onClick={() => void exportPdf()}
                 disabled={busy}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-indigo-800 hover:bg-indigo-50 disabled:opacity-50"
               >
-                <span className="text-sm">📦</span>
+                <span className="text-sm">📕</span>
                 <span>
-                  <span className="font-medium">完整包 ZIP</span>
+                  <span className="font-medium">可视化 PDF</span>
                   <span className="mt-0.5 block font-mono text-[10px] text-zinc-500">
-                    JSON + SVG{chartCount > 0 ? ` + ${chartCount} 图` : ""}
+                    图谱截图、ECharts 图（{chartCount} 张）与全部表格
                   </span>
                 </span>
               </button>

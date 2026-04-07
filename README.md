@@ -62,7 +62,8 @@ npm run lint
 
 - **交互 SVG 图谱**：`components/graph/knowledge-graph.tsx`（力导向 / 树 / 放射 / 网格等布局）。
 - **多图表看板**：同一笔记在下方展示多块 **ECharts**（饼图、柱状图、折线图、雷达图、力导向网络等），数据均来自同一份 `GraphData`。
-- **扩展新图表类型**：在 `lib/chart-registry.ts` 中调用 `registerGraphChart({ id, title, description, buildOption })`，或在应用入口集中注册；内置列表由 `getGraphChartDefinitions()` 返回。
+- **导出 PDF**：笔记页「导出 → 可视化 PDF」会生成单份 PDF，包含知识图谱栅格图、全部已注册的 ECharts 截图，以及文档要点表与内容速览表（正文使用在线加载的 Noto Sans SC 字体，离线失败时可能缺字）。
+- **扩展新图表类型**：在 `lib/chart-registry.ts` 中调用 `registerGraphChart({ id, title, description, build })`，`build` 返回 `{ kind: "echarts", option }` 或 `{ kind: "table", columns, rows }`；内置列表由 `getGraphChartDefinitions()` 返回。
 
 ## 更多信息
 

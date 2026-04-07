@@ -13,6 +13,15 @@ const ACCEPTED_TYPES = [
 
 const MAX_SIZE = 100 * 1024 * 1024;
 
+const NOTE_CATEGORIES = [
+  { value: "", label: "未分类" },
+  { value: "技术", label: "技术" },
+  { value: "学术", label: "学术" },
+  { value: "工作", label: "工作" },
+  { value: "读书笔记", label: "读书笔记" },
+  { value: "其他", label: "其他" },
+] as const;
+
 const EXT_ICONS: Record<string, string> = {
   pdf: "📄",
   doc: "📝",
@@ -37,6 +46,7 @@ interface Props {
 export function FileUpload({ onParsed }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [noteName, setNoteName] = useState("");
+  const [category, setCategory] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -86,6 +96,9 @@ export function FileUpload({ onParsed }: Props) {
       const formData = new FormData();
       formData.append("file", file!);
       formData.append("noteName", noteName);
+      if (category.trim()) {
+        formData.append("category", category.trim());
+      }
 
       const { jobId } = await api.parseDocument(formData);
 
@@ -125,6 +138,25 @@ export function FileUpload({ onParsed }: Props) {
           disabled={isParsing}
           className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
         />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="note-category" className="text-xs font-medium text-zinc-600">
+          分类
+        </label>
+        <select
+          id="note-category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          disabled={isParsing}
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
+        >
+          {NOTE_CATEGORIES.map((c) => (
+            <option key={c.value || "none"} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* drop zone */}

@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { AppHeader } from "@/components/layout/app-header";
+import { DeleteNoteButton } from "@/components/note/delete-note-button";
 import { FileUpload } from "@/components/upload/file-upload";
 import { useParseProgress } from "@/components/providers/parse-progress-provider";
 import { api } from "@/lib/api";
-import { NoteItem } from "@/lib/types";
+import type { NoteItem, NoteListResponse } from "@/lib/types";
 
 const TYPE_COLORS = [
   "from-indigo-500 to-violet-500",
@@ -16,127 +18,484 @@ const TYPE_COLORS = [
   "from-amber-500 to-orange-500",
 ];
 
-function ParsingPlaceholderCard() {
+function fadeUp(reduce: boolean | null, delay = 0): Variants {
+  return {
+    hidden: { opacity: 0, y: reduce ? 0 : 14 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: reduce ? 0 : 0.45, delay, ease: [0.22, 1, 0.36, 1] },
+    },
+  };
+}
+
+function stagger(reduce: boolean | null): Variants {
+  return {
+    hidden: {},
+    visible: {
+      transition: { staggerChildren: reduce ? 0 : 0.08, delayChildren: reduce ? 0 : 0.06 },
+    },
+  };
+}
+
+function ParsingPlaceholderCard({
+  reduce,
+  onStop,
+}: {
+  reduce: boolean | null;
+  onStop: () => void;
+}) {
   return (
-    <div className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-indigo-200 bg-indigo-50/50 p-5">
-      <span className="absolute left-0 top-0 h-1 w-full animate-pulse rounded-t-2xl bg-gradient-to-r from-indigo-500 to-violet-500" />
-      <div className="mt-1 flex items-center gap-3">
-        <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-        <span className="text-sm font-medium text-indigo-700">正在解析文档，知识图谱生成中...</span>
+    <motion.div
+      variants={fadeUp(reduce)}
+      className="relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-indigo-200/80 bg-gradient-to-br from-indigo-50/90 via-white to-violet-50/50 p-5 shadow-md shadow-indigo-500/5"
+    >
+      <span className="absolute inset-x-0 top-0 h-[3px] overflow-hidden rounded-t-2xl bg-indigo-100">
+        <span className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-indigo-500 to-transparent animate-shimmer" />
+      </span>
+      {!reduce && (
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-indigo-400/15 blur-2xl"
+          animate={{ opacity: [0.4, 0.75, 0.4], scale: [1, 1.08, 1] }}
+          transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+      <div className="relative mt-1 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-3">
+          <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+          <span className="text-sm font-medium text-indigo-800">正在解析文档，知识图谱生成中...</span>
+        </div>
+        <button
+          type="button"
+          onClick={onStop}
+          className="cursor-pointer shrink-0 rounded-lg border border-indigo-300 bg-white/80 px-3 py-1.5 text-xs font-medium text-indigo-800 shadow-sm transition hover:bg-indigo-50"
+        >
+          停止解析
+        </button>
       </div>
-      <div className="h-2 w-2/3 animate-pulse rounded-full bg-indigo-200" />
-    </div>
+      <div className="relative h-2 w-2/3 overflow-hidden rounded-full bg-indigo-100/80">
+        <motion.span
+          className="absolute inset-y-0 left-0 w-2/5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+          animate={reduce ? {} : { x: ["-100%", "280%"] }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+    </motion.div>
   );
 }
 
-function NoteCard({ note, index }: { note: NoteItem; index: number }) {
+function NoteCard({
+  note,
+  index,
+  reduce,
+  onDeleted,
+}: {
+  note: NoteItem;
+  index: number;
+  reduce: boolean | null;
+  onDeleted: () => void;
+}) {
+  const router = useRouter();
   const gradient = TYPE_COLORS[index % TYPE_COLORS.length];
   return (
-    <Link
-      href={`/note/${note.id}`}
-      className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-zinc-300 hover:shadow-md"
-    >
-      <span className={`absolute left-0 top-0 h-1 w-full bg-gradient-to-r ${gradient} rounded-t-2xl`} />
+    <motion.div variants={fadeUp(reduce, index * 0.04)}>
+      <div
+        role="link"
+        tabIndex={0}
+        onClick={() => router.push(`/note/${note.id}`)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            router.push(`/note/${note.id}`);
+          }
+        }}
+        className="group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-2xl border border-zinc-200/90 bg-white/90 p-5 shadow-sm backdrop-blur-sm transition-colors duration-300 hover:border-indigo-200/80 hover:bg-white hover:shadow-lg hover:shadow-indigo-500/10"
+      >
+        <span
+          className={`absolute left-0 top-0 h-[3px] w-full bg-gradient-to-r ${gradient} rounded-t-2xl opacity-90 transition-opacity group-hover:opacity-100`}
+        />
+        {!reduce && (
+          <span className="pointer-events-none absolute -right-6 top-1/2 h-20 w-20 -translate-y-1/2 rounded-full bg-gradient-to-br from-indigo-500/0 via-violet-500/10 to-cyan-500/0 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100" />
+        )}
 
-      <div className="mt-1 flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold leading-snug text-zinc-900">{note.name}</h3>
-        <svg
-          className="mt-0.5 h-4 w-4 shrink-0 text-zinc-300 transition group-hover:translate-x-0.5 group-hover:text-zinc-500"
-          viewBox="0 0 16 16" fill="none"
-        >
-          <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
+        <div className="relative mt-1 flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold leading-snug text-zinc-900">{note.name}</h3>
+            <span
+              className={`mt-1.5 inline-block rounded-md px-2 py-0.5 text-[10px] font-medium ${
+                note.category?.trim()
+                  ? "bg-indigo-50 text-indigo-700"
+                  : "bg-zinc-100 text-zinc-500"
+              }`}
+            >
+              {note.category?.trim() || "其他"}
+            </span>
+          </div>
+          <div className="mt-0.5 flex shrink-0 items-center gap-1">
+            <DeleteNoteButton
+              variant="icon"
+              noteId={note.id}
+              noteName={note.name}
+              onDeleted={onDeleted}
+            />
+            <motion.span
+              className="inline-flex text-zinc-300 transition group-hover:text-indigo-500"
+              whileHover={reduce ? {} : { x: 3 }}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path
+                  d="M3 8h10M9 4l4 4-4 4"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </motion.span>
+          </div>
+        </div>
 
-      <div className="flex items-center gap-3 text-xs text-zinc-400">
-        <span className="flex items-center gap-1">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-indigo-400" />
-          {note.nodeCount} 个节点
-        </span>
-        <span>{note.createdAt}</span>
+        <div className="relative flex items-center gap-3 text-xs text-zinc-400">
+          <span className="flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              {!reduce && (
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-40" />
+              )}
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
+            </span>
+            {note.nodeCount} 个节点
+          </span>
+          <span className="text-zinc-300">·</span>
+          <span>{note.createdAt}</span>
+        </div>
       </div>
-    </Link>
+    </motion.div>
   );
 }
 
 export default function DashboardPage() {
-  const [notes, setNotes] = useState<NoteItem[]>([]);
+  const [listData, setListData] = useState<NoteListResponse | null>(null);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(5);
+  const [categoryKey, setCategoryKey] = useState<string>("");
+  const [keywordInput, setKeywordInput] = useState("");
+  const [keyword, setKeyword] = useState("");
   const router = useRouter();
-  const { jobInfo } = useParseProgress();
+  const { jobInfo, cancelCurrentParse } = useParseProgress();
+  const reduce = useReducedMotion();
+  const doneListRefreshRef = useRef(false);
 
   useEffect(() => {
-    api.fetchNotes()
-      .then((data) => setNotes(data ?? []))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    const t = setTimeout(() => setKeyword(keywordInput.trim()), 320);
+    return () => clearTimeout(t);
+  }, [keywordInput]);
+
+  const loadList = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params: { page: number; size: number; category?: string; keyword?: string } = {
+        page,
+        size: pageSize,
+      };
+      if (categoryKey === "__none__") params.category = "__none__";
+      else if (categoryKey) params.category = categoryKey;
+      if (keyword) params.keyword = keyword;
+      const data = await api.fetchNotesPage(params);
+      setListData(data);
+    } catch (e) {
+      console.error(e);
+      setListData(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, pageSize, categoryKey, keyword]);
+
+  useEffect(() => {
+    void loadList();
+  }, [loadList]);
+
+  useEffect(() => {
+    api
+      .fetchNoteCategories()
+      .then(setCategories)
+      .catch(() => setCategories([]));
   }, []);
 
-  const totalNodes = notes.reduce((acc, n) => acc + n.nodeCount, 0);
+  useEffect(() => {
+    setPage(0);
+  }, [categoryKey, keyword]);
+
+  useEffect(() => {
+    const s = jobInfo?.status;
+    if (s === "DONE" && !doneListRefreshRef.current) {
+      doneListRefreshRef.current = true;
+      void loadList();
+    }
+    if (s !== "DONE") {
+      doneListRefreshRef.current = false;
+    }
+  }, [jobInfo?.status, loadList]);
+
+  const notes = listData?.items ?? [];
   const isParsing = jobInfo?.status === "PENDING" || jobInfo?.status === "PROCESSING";
 
+  const stats = [
+    {
+      label: "笔记数量",
+      value: listData?.allNotesCount ?? 0,
+      icon: "◈",
+      accent: "from-indigo-500 to-violet-600",
+      ring: "ring-indigo-500/15",
+    },
+    {
+      label: "知识节点",
+      value: listData?.totalNodeCount ?? 0,
+      icon: "◎",
+      accent: "from-cyan-500 to-blue-600",
+      ring: "ring-cyan-500/15",
+    },
+    {
+      label: "本月新增",
+      value: listData?.notesThisMonth ?? 0,
+      icon: "✦",
+      accent: "from-emerald-500 to-teal-600",
+      ring: "ring-emerald-500/15",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#f8f9fb]">
+      <div className="home-hero-grid pointer-events-none absolute inset-0 opacity-[0.55] [mask-image:linear-gradient(to_bottom,black_25%,black_50%,transparent_88%)]" />
+
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 right-0 h-72 w-72 rounded-full sm:right-[10%]"
+        style={{
+          background: "radial-gradient(circle, rgba(99,102,241,0.18), transparent 68%)",
+          filter: "blur(40px)",
+        }}
+        animate={reduce ? {} : { opacity: [0.5, 0.85, 0.5], scale: [1, 1.05, 1] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute bottom-32 left-0 h-56 w-56 rounded-full sm:left-[5%]"
+        style={{
+          background: "radial-gradient(circle, rgba(6,182,212,0.14), transparent 65%)",
+          filter: "blur(36px)",
+        }}
+        animate={reduce ? {} : { opacity: [0.4, 0.7, 0.4] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-8">
-        <div className="mb-7">
-          <h1 className="text-xl font-bold text-zinc-900">仪表盘</h1>
-          <p className="mt-1 text-sm text-zinc-500">管理你的知识图谱笔记</p>
-        </div>
+      <main className="relative z-[1] mx-auto w-full max-w-6xl px-4 py-8 sm:py-10">
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={stagger(reduce)}
+          className="mb-8 sm:mb-10"
+        >
+          <motion.h1
+            variants={fadeUp(reduce)}
+            className="text-2xl font-bold tracking-tight text-zinc-900 sm:text-[1.65rem]"
+          >
+            仪表盘
+          </motion.h1>
+          <motion.p
+            variants={fadeUp(reduce)}
+            className="mt-2 max-w-lg text-sm leading-relaxed text-zinc-500"
+          >
+            管理知识图谱笔记，上传文档即可
+            <span className="gradient-text font-medium"> 抽取 · 可视化 · 对话</span>
+          </motion.p>
+        </motion.div>
 
-        <div className="mb-7 grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {[
-            { label: "笔记数量", value: notes.length, icon: "📒", color: "text-indigo-600 bg-indigo-50" },
-            { label: "知识节点", value: totalNodes, icon: "◎", color: "text-violet-600 bg-violet-50" },
-            { label: "本月新增", value: 1, icon: "✦", color: "text-emerald-600 bg-emerald-50" },
-          ].map((stat) => (
-            <div
+        <motion.div
+          initial="hidden"
+          animate="visible"
+          variants={stagger(reduce)}
+          className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4"
+        >
+          {stats.map((stat, i) => (
+            <motion.div
               key={stat.label}
-              className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm"
+              variants={fadeUp(reduce, i * 0.05)}
+              whileHover={reduce ? {} : { y: -3, transition: { duration: 0.2 } }}
+              className={`relative overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/75 px-4 py-4 shadow-sm backdrop-blur-md ring-1 ${stat.ring} sm:px-5 sm:py-4`}
             >
-              <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-base ${stat.color}`}>
-                {stat.icon}
-              </span>
-              <div>
-                <p className="text-xl font-bold text-zinc-900">{loading ? "—" : stat.value}</p>
-                <p className="text-xs text-zinc-500">{stat.label}</p>
+              <div
+                className={`absolute -right-6 -top-6 h-20 w-20 rounded-full bg-gradient-to-br ${stat.accent} opacity-[0.12] blur-2xl`}
+              />
+              <div className="relative flex items-center gap-3 sm:gap-4">
+                <span
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${stat.accent} text-sm font-semibold text-white shadow-md shadow-indigo-500/20`}
+                >
+                  {stat.icon}
+                </span>
+                <div>
+                  <p className="text-xl font-bold tabular-nums text-zinc-900 sm:text-2xl">
+                    {loading ? "—" : stat.value}
+                  </p>
+                  <p className="text-xs text-zinc-500">{stat.label}</p>
+                </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-          <section>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-zinc-800">我的笔记</h2>
-              <span className="text-xs text-zinc-400">{notes.length} 篇</span>
-            </div>
+          <motion.section
+            initial="hidden"
+            animate="visible"
+            variants={stagger(reduce)}
+          >
+            <motion.div variants={fadeUp(reduce)} className="mb-4 space-y-3 border-b border-zinc-200/80 pb-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-zinc-800">我的笔记</h2>
+                <span className="rounded-full bg-zinc-100/90 px-2.5 py-0.5 text-xs font-medium text-zinc-500">
+                  {loading ? "…" : `${listData?.total ?? 0} 条`}
+                  {!loading && listData && listData.total !== listData.allNotesCount
+                    ? `（已筛选，共 ${listData.allNotesCount} 篇）`
+                    : null}
+                </span>
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <label className="flex items-center gap-2 text-xs text-zinc-600">
+                  <span className="shrink-0">分类</span>
+                  <select
+                    value={categoryKey}
+                    onChange={(e) => setCategoryKey(e.target.value)}
+                    className="min-w-[8rem] rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-800 outline-none focus:border-indigo-400"
+                  >
+                    <option value="">全部</option>
+                    <option value="__none__">其他</option>
+                    {categories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex min-w-0 flex-1 items-center gap-2 text-xs text-zinc-600 sm:max-w-xs">
+                  <span className="shrink-0">搜索</span>
+                  <input
+                    type="search"
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    placeholder="按标题过滤"
+                    className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs text-zinc-800 outline-none placeholder:text-zinc-400 focus:border-indigo-400"
+                  />
+                </label>
+              </div>
+            </motion.div>
 
             {loading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 animate-pulse rounded-2xl bg-zinc-200/70" />
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0.45 }}
+                    animate={{ opacity: [0.45, 0.85, 0.45] }}
+                    transition={{
+                      duration: 1.2,
+                      repeat: Infinity,
+                      delay: i * 0.15,
+                      ease: "easeInOut",
+                    }}
+                    className="h-20 rounded-2xl border border-zinc-100 bg-gradient-to-r from-zinc-100/80 via-zinc-50 to-zinc-100/80"
+                  />
                 ))}
               </div>
-            ) : notes.length === 0 && !isParsing ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-zinc-300 bg-white py-16 text-center">
-                <span className="text-3xl">📭</span>
+            ) : notes.length === 0 && !isParsing && !loading ? (
+              <motion.div
+                variants={fadeUp(reduce)}
+                initial="hidden"
+                animate="visible"
+                className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-indigo-200/60 bg-gradient-to-b from-white/90 to-indigo-50/30 py-16 text-center backdrop-blur-sm"
+              >
+                <motion.span
+                  className="text-3xl"
+                  animate={reduce ? {} : { y: [0, -4, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  📭
+                </motion.span>
                 <p className="text-sm text-zinc-500">还没有笔记，上传文档开始创建吧</p>
-              </div>
+                <Link
+                  href="/demo"
+                  className="text-sm font-medium text-indigo-600 transition hover:text-indigo-500"
+                >
+                  先看演示示例 →
+                </Link>
+              </motion.div>
             ) : (
-              <div className="space-y-3">
-                {isParsing && <ParsingPlaceholderCard />}
+              <motion.div
+                className="space-y-3"
+                initial="hidden"
+                animate="visible"
+                variants={stagger(reduce)}
+              >
+                {isParsing && (
+                  <ParsingPlaceholderCard
+                    reduce={reduce}
+                    onStop={() => void cancelCurrentParse()}
+                  />
+                )}
                 {notes.map((note, i) => (
-                  <NoteCard key={note.id} note={note} index={i} />
+                  <NoteCard
+                    key={note.id}
+                    note={note}
+                    index={i}
+                    reduce={reduce}
+                    onDeleted={() => void loadList()}
+                  />
                 ))}
-              </div>
+                {!loading && listData && listData.totalPages > 1 && (
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <p className="text-xs text-zinc-500">
+                      第 {listData.page + 1} / {listData.totalPages} 页 · 每页 {listData.size} 条
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={page <= 0}
+                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                        className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        上一页
+                      </button>
+                      <button
+                        type="button"
+                        disabled={page >= listData.totalPages - 1}
+                        onClick={() => setPage((p) => p + 1)}
+                        className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        下一页
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
             )}
-          </section>
+          </motion.section>
 
-          <aside className="lg:sticky lg:top-20 lg:self-start">
-            <FileUpload onParsed={(id) => router.push(`/note/${id}`)} />
-          </aside>
+          <motion.aside
+            initial={{ opacity: 0, y: reduce ? 0 : 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduce ? 0 : 0.5, delay: reduce ? 0 : 0.12, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:sticky lg:top-20 lg:self-start"
+          >
+            <div className="rounded-2xl border border-indigo-200/40 bg-white/60 p-0.5 shadow-lg shadow-indigo-500/5 backdrop-blur-md">
+              <div className="overflow-hidden rounded-[14px] bg-white/95">
+                <FileUpload onParsed={(id) => router.push(`/note/${id}`)} />
+              </div>
+            </div>
+          </motion.aside>
         </div>
       </main>
     </div>

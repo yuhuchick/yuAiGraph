@@ -1,6 +1,7 @@
+/* eslint-disable react-hooks/refs */
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GraphData, GraphNode, GraphLink, NodeType } from "@/lib/types";
 
 // ─── 类型定义 ─────────────────────────────────────────────────────
@@ -62,7 +63,7 @@ function LegendShapeIcon({ type }: { type: NodeType }) {
   const r = 6;
   return (
     <svg width={16} height={16} viewBox="-8 -8 16 16" className="shrink-0">
-      <NodeShape shape={c.shape} r={r} fill={c.fill} stroke={c.stroke} strokeWidth={1.5} />
+      <NodeShape shape={c?.shape} r={r} fill={c?.fill} stroke={c?.stroke} strokeWidth={1.5} />
     </svg>
   );
 }
@@ -76,6 +77,15 @@ const LAYOUT_META: { id: LayoutType; label: string; icon: string; hint: string }
 
 const NODE_R  = 28;
 const PADDING = NODE_R + 8;
+/** 节点纵向/行距下限，避免密堆叠；画布最小高度据此推算 */
+const ROW_SLOT = NODE_R * 2 + 16;
+const MAX_SVG_DIM = 10000;
+
+/** 图谱视口缩放（1 = 默认；>1 放大内容，<1 缩小见更多） */
+const ZOOM_MIN = 0.45;
+const ZOOM_MAX = 2.75;
+const ZOOM_STEP_WHEEL = 1.09;
+const ZOOM_STEP_BUTTON = 1.2;
 
 // 各布局的仿真帧数（0 = 静态，不运行仿真）
 const SIM_FRAMES: Record<LayoutType, number> = {
@@ -96,17 +106,16 @@ function layoutForce(nodes: GraphNode[], w: number, h: number): NodePos[] {
   });
 }
 
-function layoutTree(nodes: GraphNode[], links: GraphLink[], w: number, h: number): NodePos[] {
-  if (!nodes.length) return [];
+/** 与 layoutTree 相同的层级 BFS，供画布尺寸与树布局复用 */
+function assignTreeLevels(nodes: GraphNode[], links: GraphLink[]): Map<string, number> {
+  const levels = new Map<string, number>();
+  if (!nodes.length) return levels;
 
-  // 计算入度，找根节点
   const inDeg = new Map(nodes.map((n) => [n.id, 0]));
   for (const l of links) inDeg.set(l.target, (inDeg.get(l.target) ?? 0) + 1);
   let roots = nodes.filter((n) => inDeg.get(n.id) === 0);
   if (!roots.length) roots = [nodes[0]];
 
-  // BFS 分配层级
-  const levels = new Map<string, number>();
   const queue: { id: string; lv: number }[] = roots.map((r) => ({ id: r.id, lv: 0 }));
   const visited = new Set<string>(roots.map((r) => r.id));
 
@@ -122,6 +131,13 @@ function layoutTree(nodes: GraphNode[], links: GraphLink[], w: number, h: number
     }
   }
   for (const n of nodes) if (!levels.has(n.id)) levels.set(n.id, 0);
+  return levels;
+}
+
+function layoutTree(nodes: GraphNode[], links: GraphLink[], w: number, h: number): NodePos[] {
+  if (!nodes.length) return [];
+
+  const levels = assignTreeLevels(nodes, links);
 
   // 按层分组
   const byLv = new Map<number, string[]>();
@@ -131,14 +147,18 @@ function layoutTree(nodes: GraphNode[], links: GraphLink[], w: number, h: number
   }
 
   const maxLv = Math.max(...levels.values(), 0);
-  const lvH = (h - PADDING * 2) / Math.max(maxLv, 1);
+  // 层号为 0..maxLv 共 (maxLv+1) 层；原先除以 maxLv 会在多层时把最底行挤出画布，盖住下方图例
+  const nLevels = maxLv + 1;
+  const usableH = Math.max(h - PADDING * 2 - 2 * NODE_R, NODE_R * 2);
+  const lvH = usableH / Math.max(nLevels, 1);
+  const usableW = Math.max(w - PADDING * 2 - 2 * NODE_R, NODE_R * 2);
 
   return nodes.map((node) => {
     const lv = levels.get(node.id)!;
     const lvNodes = byLv.get(lv)!;
     const idx = lvNodes.indexOf(node.id);
-    const x = PADDING + (w - PADDING * 2) * (idx + 1) / (lvNodes.length + 1);
-    const y = PADDING + lv * lvH + lvH / 2;
+    const x = PADDING + NODE_R + usableW * (idx + 1) / (lvNodes.length + 1);
+    const y = PADDING + NODE_R + lv * lvH + lvH / 2;
     return { id: node.id, x, y, vx: 0, vy: 0 };
   });
 }
@@ -206,7 +226,7 @@ function layoutGrid(nodes: GraphNode[], w: number, h: number): NodePos[] {
     const typeNodes = byType.get(type)!;
     const colX = PADDING + ci * colW + colW / 2;
     const usableH = h - PADDING * 2 - HEADER_H;
-    const rowH = usableH / Math.max(typeNodes.length, 1);
+    const rowH = Math.max(ROW_SLOT, usableH / Math.max(typeNodes.length, 1));
     typeNodes.forEach((node, ri) => {
       result.push({
         id: node.id,
@@ -217,6 +237,83 @@ function layoutGrid(nodes: GraphNode[], w: number, h: number): NodePos[] {
     });
   });
   return result;
+}
+
+/** 逻辑画布宽度（可大于视口）；视口宽度始终为容器宽，通过平移查看 */
+function contentCanvasWidth(
+  layout: LayoutType,
+  nodes: GraphNode[],
+  links: GraphLink[],
+  wViewport: number,
+): number {
+  if (!nodes.length) return wViewport;
+  if (layout !== "tree") return wViewport;
+
+  const levels = assignTreeLevels(nodes, links);
+  const countByLv = new Map<number, number>();
+  for (const lv of levels.values()) countByLv.set(lv, (countByLv.get(lv) ?? 0) + 1);
+  const maxBreadth = Math.max(1, ...countByLv.values());
+  const slotW = NODE_R * 2 + 14;
+  const need = Math.ceil(PADDING * 2 + 2 * NODE_R + maxBreadth * slotW);
+  return Math.min(MAX_SVG_DIM, Math.max(wViewport, need));
+}
+
+function clampPan(
+  p: { x: number; y: number },
+  vw: number,
+  vh: number,
+  cw: number,
+  ch: number,
+): { x: number; y: number } {
+  const maxX = Math.max(0, cw - vw);
+  const maxY = Math.max(0, ch - vh);
+  return {
+    x: Math.min(maxX, Math.max(0, p.x)),
+    y: Math.min(maxY, Math.max(0, p.y)),
+  };
+}
+
+function minCanvasHeight(
+  layout: LayoutType,
+  nodes: GraphNode[],
+  links: GraphLink[],
+  w: number,
+  baseH: number,
+): number {
+  const n = nodes.length;
+  if (n === 0) return Math.max(280, baseH);
+  const vPad = PADDING * 2 + 2 * NODE_R;
+
+  let need: number;
+  switch (layout) {
+    case "grid": {
+      const types: NodeType[] = ["concept", "person", "event", "object"];
+      const byType = new Map<NodeType, GraphNode[]>(types.map((t) => [t, []]));
+      for (const node of nodes) byType.get(node.type as NodeType)?.push(node);
+      const active = types.filter((t) => byType.get(t)!.length > 0);
+      const maxCol = Math.max(1, ...active.map((t) => byType.get(t)!.length));
+      const HEADER_H = 36;
+      need = HEADER_H + maxCol * ROW_SLOT + vPad;
+      break;
+    }
+    case "tree": {
+      const levels = assignTreeLevels(nodes, links);
+      const maxLv = Math.max(0, ...levels.values());
+      const nLevels = maxLv + 1;
+      need = nLevels * (NODE_R * 2 + 12) + vPad;
+      break;
+    }
+    case "radial":
+    case "force": {
+      const g = Math.ceil(Math.sqrt(Math.max(n, 1) * 1.45));
+      need = g * ROW_SLOT + vPad;
+      break;
+    }
+    default:
+      need = baseH;
+  }
+
+  return Math.min(MAX_SVG_DIM, Math.max(280, baseH, need));
 }
 
 function buildPositions(
@@ -238,6 +335,14 @@ function buildPositions(
 
 const EMPTY_GRAPH: GraphData = { nodes: [], links: [] };
 
+function getFullscreenElement(): Element | null {
+  return (
+    document.fullscreenElement ??
+    (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement ??
+    null
+  );
+}
+
 interface Props {
   data: GraphData | null | undefined;
   svgId?: string;
@@ -245,6 +350,12 @@ interface Props {
 
 export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
   const data = dataProp ?? EMPTY_GRAPH;
+  const dataRef = useRef(data);
+  const layoutRef = useRef<LayoutType>("force");
+  dataRef.current = data;
+
+  const graphRootRef = useRef<HTMLDivElement>(null);
+  const wasGraphFullscreenRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef       = useRef<SVGSVGElement>(null);
   const posRef       = useRef<NodePos[]>([]);
@@ -252,29 +363,168 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
   const dragRef      = useRef<{ id: string } | null>(null);
   const frameRef     = useRef(0);
 
-  const [dim, setDim]         = useState({ w: 640, h: 420 });
-  const [tick, setTick]       = useState(0);
+  const [viewDim, setViewDim] = useState({ w: 640, h: 420 });
+  const [pan, setPan]         = useState({ x: 0, y: 0 });
+  const [zoom, setZoom]       = useState(1);
+  const [panning, setPanning] = useState(false);
+  const [, setTick]           = useState(0);
   const [selected, setSelected] = useState<GraphNode | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [layout, setLayout]   = useState<LayoutType>("force");
+  const [graphFullscreen, setGraphFullscreen] = useState(false);
+  layoutRef.current = layout;
 
-  // ResizeObserver
+  const contentDim = useMemo(() => {
+    const vw = viewDim.w;
+    const vh = viewDim.h;
+    const cw = contentCanvasWidth(layout, data.nodes, data.links, vw);
+    const ch = minCanvasHeight(layout, data.nodes, data.links, cw, vh);
+    return { w: cw, h: ch };
+  }, [layout, data.nodes, data.links, viewDim.w, viewDim.h]);
+
+  const panRef = useRef(pan);
+  const zoomRef = useRef(zoom);
+  const viewDimRef = useRef(viewDim);
+  const contentDimRef = useRef(contentDim);
+  const panDragRef = useRef<{ sx: number; sy: number; px: number; py: number } | null>(null);
+  panRef.current = pan;
+  zoomRef.current = zoom;
+  viewDimRef.current = viewDim;
+  contentDimRef.current = contentDim;
+
+  const visibleDim = useMemo(
+    () => ({ w: viewDim.w / zoom, h: viewDim.h / zoom }),
+    [viewDim.w, viewDim.h, zoom],
+  );
+
+  const toggleGraphFullscreen = useCallback(async () => {
+    const el = graphRootRef.current;
+    if (!el) return;
+    try {
+      if (getFullscreenElement() === el) {
+        const d = document as Document & { webkitExitFullscreen?: () => void };
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else d.webkitExitFullscreen?.();
+      } else {
+        const h = el as HTMLElement & { webkitRequestFullscreen?: () => void };
+        if (el.requestFullscreen) await el.requestFullscreen();
+        else h.webkitRequestFullscreen?.();
+      }
+    } catch {
+      /* 部分环境不支持元素级全屏 */
+    }
+  }, []);
+
+  useEffect(() => {
+    const applyEmbeddedSize = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      const wObs = Math.floor(el.getBoundingClientRect().width);
+      if (wObs < 32) return;
+      const baseH = Math.max(360, Math.round(wObs * 0.62));
+      setViewDim({ w: wObs, h: Math.max(280, baseH) });
+    };
+
+    const sync = () => {
+      const on = getFullscreenElement() === graphRootRef.current;
+      const wasFullscreen = wasGraphFullscreenRef.current;
+      wasGraphFullscreenRef.current = on;
+      setGraphFullscreen(on);
+      // 仅在全屏 → 嵌入 时延后重算，避免首屏重复与全屏残留尺寸
+      if (wasFullscreen && !on) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(applyEmbeddedSize);
+        });
+      }
+    };
+    document.addEventListener("fullscreenchange", sync);
+    document.addEventListener("webkitfullscreenchange", sync);
+    sync();
+    return () => {
+      document.removeEventListener("fullscreenchange", sync);
+      document.removeEventListener("webkitfullscreenchange", sync);
+    };
+  }, []);
+
+  // ResizeObserver：全屏时用画布区域实际高度，非全屏按宽度比例（与退出全屏后的强制重算一致）
   useEffect(() => {
     if (!containerRef.current) return;
     const ro = new ResizeObserver((entries) => {
-      const { width } = entries[0].contentRect;
-      setDim({ w: width, h: Math.max(360, Math.round(width * 0.62)) });
+      const { width, height } = entries[0].contentRect;
+      if (width < 32) return;
+      const inFs = getFullscreenElement() === graphRootRef.current;
+      const wObs = Math.floor(width);
+      const baseH =
+        inFs && height >= 64
+          ? Math.floor(height)
+          : Math.max(360, Math.round(width * 0.62));
+      setViewDim({ w: wObs, h: Math.max(280, baseH) });
     });
     ro.observe(containerRef.current);
     return () => ro.disconnect();
   }, []);
 
+  // 逻辑画布大于视口时限制平移范围（视口尺寸随 zoom 变化）
+  useEffect(() => {
+    setPan((p) =>
+      clampPan(p, visibleDim.w, visibleDim.h, contentDim.w, contentDim.h),
+    );
+  }, [viewDim.w, viewDim.h, contentDim.w, contentDim.h, visibleDim.w, visibleDim.h]);
+
+  /** 以视口中心为锚点缩放 */
+  const applyZoom = useCallback((z1: number) => {
+    const z0 = zoomRef.current;
+    const clamped = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z1));
+    if (Math.abs(clamped - z0) < 1e-6) return;
+    const vd = viewDimRef.current;
+    const cd = contentDimRef.current;
+    const pr = panRef.current;
+    const vw0 = vd.w / z0;
+    const vh0 = vd.h / z0;
+    const cx = pr.x + vw0 / 2;
+    const cy = pr.y + vh0 / 2;
+    const vw1 = vd.w / clamped;
+    const vh1 = vd.h / clamped;
+    const np = clampPan({ x: cx - vw1 / 2, y: cy - vh1 / 2 }, vw1, vh1, cd.w, cd.h);
+    setZoom(clamped);
+    setPan(np);
+  }, []);
+
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const z0 = zoomRef.current;
+      const factor = e.deltaY > 0 ? 1 / ZOOM_STEP_WHEEL : ZOOM_STEP_WHEEL;
+      const z1 = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, z0 * factor));
+      if (Math.abs(z1 - z0) < 1e-6) return;
+      const vd = viewDimRef.current;
+      const cd = contentDimRef.current;
+      const pr = panRef.current;
+      const rect = el.getBoundingClientRect();
+      const fx = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0.5;
+      const fy = rect.height > 0 ? (e.clientY - rect.top) / rect.height : 0.5;
+      const vw0 = vd.w / z0;
+      const vh0 = vd.h / z0;
+      const cx = pr.x + fx * vw0;
+      const cy = pr.y + fy * vh0;
+      const vw1 = vd.w / z1;
+      const vh1 = vd.h / z1;
+      const np = clampPan({ x: cx - fx * vw1, y: cy - fy * vh1 }, vw1, vh1, cd.w, cd.h);
+      setZoom(z1);
+      setPan(np);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [data.nodes.length]);
+
   // 布局切换或数据/尺寸变化时重新初始化位置
   useEffect(() => {
-    posRef.current = buildPositions(layout, data.nodes, data.links, dim.w, dim.h);
+    posRef.current = buildPositions(layout, data.nodes, data.links, contentDim.w, contentDim.h);
     frameRef.current = 0;
     setTick((n) => n + 1);
-  }, [layout, data.nodes, data.links, dim]);
+  }, [layout, data.nodes, data.links, contentDim]);
 
   // 力仿真（根据布局决定帧数）
   useEffect(() => {
@@ -285,8 +535,8 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
     const maxFrames = SIM_FRAMES[layout];
     if (maxFrames === 0) return;
 
-    const idealLen = Math.min(dim.w, dim.h) * 0.3;
-    const cx = dim.w / 2, cy = dim.h / 2;
+    const idealLen = Math.min(contentDim.w, contentDim.h) * 0.3;
+    const cx = contentDim.w / 2, cy = contentDim.h / 2;
 
     const REPULSION   = layout === "force" ? 6000 : 2000;
     const SPRING_K    = layout === "force" ? 0.03  : 0.01;
@@ -324,8 +574,8 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
       for (const p of pos) {
         if (dragRef.current?.id === p.id) continue;
         p.vx *= DAMPING; p.vy *= DAMPING;
-        p.x = Math.max(PADDING, Math.min(dim.w - PADDING, p.x + p.vx));
-        p.y = Math.max(PADDING, Math.min(dim.h - PADDING, p.y + p.vy));
+        p.x = Math.max(PADDING, Math.min(contentDim.w - PADDING, p.x + p.vx));
+        p.y = Math.max(PADDING, Math.min(contentDim.h - PADDING, p.y + p.vy));
       }
       setTick((n) => n + 1);
       rafRef.current = requestAnimationFrame(step);
@@ -333,7 +583,7 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
 
     rafRef.current = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [layout, data, dim]);
+  }, [layout, data, contentDim]);
 
   const getPos = useCallback((id: string) => posRef.current.find((p) => p.id === id), []);
 
@@ -345,18 +595,69 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
       )
     : null;
 
+  const clientToContent = (clientX: number, clientY: number) => {
+    const el = svgRef.current;
+    if (!el) return { x: 0, y: 0 };
+    const rect = el.getBoundingClientRect();
+    const vd = viewDimRef.current;
+    const pr = panRef.current;
+    const z = zoomRef.current;
+    const vw = vd.w / z;
+    const vh = vd.h / z;
+    const sx = ((clientX - rect.left) / rect.width) * vw;
+    const sy = ((clientY - rect.top) / rect.height) * vh;
+    return { x: pr.x + sx, y: pr.y + sy };
+  };
+
   const onSvgMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!dragRef.current || !svgRef.current) return;
-    const rect = svgRef.current.getBoundingClientRect();
     const pos = posRef.current.find((p) => p.id === dragRef.current!.id);
     if (!pos) return;
-    pos.x = Math.max(PADDING, Math.min(dim.w - PADDING, e.clientX - rect.left));
-    pos.y = Math.max(PADDING, Math.min(dim.h - PADDING, e.clientY - rect.top));
+    const { x, y } = clientToContent(e.clientX, e.clientY);
+    const cd = contentDimRef.current;
+    pos.x = Math.max(PADDING, Math.min(cd.w - PADDING, x));
+    pos.y = Math.max(PADDING, Math.min(cd.h - PADDING, y));
     pos.vx = 0; pos.vy = 0;
     setTick((n) => n + 1);
   };
 
   const stopDrag = () => { dragRef.current = null; };
+
+  const onBackdropPointerDown = (e: React.PointerEvent<SVGRectElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    panDragRef.current = {
+      sx: e.clientX,
+      sy: e.clientY,
+      px: panRef.current.x,
+      py: panRef.current.y,
+    };
+    setPanning(true);
+  };
+
+  const onBackdropPointerMove = (e: React.PointerEvent<SVGRectElement>) => {
+    const d = panDragRef.current;
+    if (!d) return;
+    const vd = viewDimRef.current;
+    const cd = contentDimRef.current;
+    const z = zoomRef.current;
+    const dx = e.clientX - d.sx;
+    const dy = e.clientY - d.sy;
+    const vw = vd.w / z;
+    const vh = vd.h / z;
+    setPan(clampPan({ x: d.px - dx / z, y: d.py - dy / z }, vw, vh, cd.w, cd.h));
+  };
+
+  const onBackdropPointerUp = (e: React.PointerEvent<SVGRectElement>) => {
+    panDragRef.current = null;
+    setPanning(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* 已释放 */
+    }
+  };
 
   const nodeConnections = selected
     ? data.links
@@ -374,7 +675,7 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
     if (layout !== "grid") return [];
     const types: NodeType[] = ["concept", "person", "event", "object"];
     const active = types.filter((t) => data.nodes.some((n) => n.type === t));
-    const colW = (dim.w - PADDING * 2) / active.length;
+    const colW = (contentDim.w - PADDING * 2) / active.length;
     return active.map((type, ci) => ({
       type,
       x: PADDING + ci * colW + colW / 2,
@@ -394,13 +695,78 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
+      <div
+        ref={graphRootRef}
+        className="flex min-h-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm [&:fullscreen]:box-border [&:fullscreen]:h-screen [&:fullscreen]:max-h-[100dvh] [&:fullscreen]:rounded-none [&:fullscreen]:border-0"
+      >
 
         {/* ── 头部工具栏 ── */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-4 py-2.5">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-4 py-2.5">
           <h3 className="text-sm font-semibold text-zinc-800">知识图谱</h3>
 
           <div className="flex items-center gap-2">
+            <div className="flex items-center rounded-lg border border-zinc-200 bg-white p-0.5">
+              <button
+                type="button"
+                title="缩小"
+                aria-label="缩小图谱"
+                onClick={() => applyZoom(zoomRef.current / ZOOM_STEP_BUTTON)}
+                disabled={zoom <= ZOOM_MIN + 1e-6}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                title={zoom === 1 ? "缩放 100%" : "重置为 100%"}
+                onClick={() => {
+                  if (Math.abs(zoom - 1) < 1e-6) return;
+                  applyZoom(1);
+                }}
+                className="min-w-[2.75rem] px-1.5 text-center text-[11px] font-medium tabular-nums text-zinc-500 hover:text-zinc-800"
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+              <button
+                type="button"
+                title="放大"
+                aria-label="放大图谱"
+                onClick={() => applyZoom(zoomRef.current * ZOOM_STEP_BUTTON)}
+                disabled={zoom >= ZOOM_MAX - 1e-6}
+                className="flex h-7 w-7 items-center justify-center rounded-md text-sm font-semibold text-zinc-600 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                +
+              </button>
+            </div>
+            <button
+              type="button"
+              title={graphFullscreen ? "退出全屏 (Esc)" : "全屏展示图谱"}
+              onClick={() => void toggleGraphFullscreen()}
+              className="flex items-center gap-1 rounded-md border border-zinc-200 bg-white px-2 py-1 text-xs font-medium text-zinc-600 transition hover:border-zinc-300 hover:bg-zinc-50"
+            >
+              {graphFullscreen ? (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                  <path
+                    d="M5 2H2v3M9 2h3v3M2 9v3h3M9 12h3V9"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                  <path
+                    d="M3 3h3V2H2v4h1V3zm8 0V2H8v1h3v3h1V3zM3 11H2v4h4v-1H3v-3zm8 0v3H8v1h4v-4h-1z"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+              <span className="hidden sm:inline">{graphFullscreen ? "退出全屏" : "全屏"}</span>
+            </button>
             {/* 布局切换器 */}
             <div className="flex items-center rounded-lg border border-zinc-200 bg-zinc-50 p-0.5">
               {LAYOUT_META.map((lm) => (
@@ -430,16 +796,26 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
         </div>
 
         {/* ── SVG 画布 ── */}
-        <div ref={containerRef} className="w-full">
+        <div
+          ref={containerRef}
+          className={`min-h-0 w-full max-w-full overflow-hidden ${graphFullscreen ? "min-h-[280px] flex-1" : ""}`}
+        >
           <svg
             ref={svgRef}
             id={svgId}
-            width={dim.w}
-            height={dim.h}
-            className="block cursor-grab select-none active:cursor-grabbing"
+            width={viewDim.w}
+            height={viewDim.h}
+            viewBox={`${pan.x} ${pan.y} ${visibleDim.w} ${visibleDim.h}`}
+            data-graph-cw={contentDim.w}
+            data-graph-ch={contentDim.h}
+            className={`block touch-none select-none overflow-hidden ${panning ? "cursor-grabbing" : "cursor-default"}`}
             onMouseMove={onSvgMouseMove}
             onMouseUp={stopDrag}
-            onMouseLeave={stopDrag}
+            onMouseLeave={() => {
+              stopDrag();
+              panDragRef.current = null;
+              setPanning(false);
+            }}
           >
             <defs>
               <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
@@ -453,9 +829,22 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
               </filter>
             </defs>
 
+            <rect
+              x={0}
+              y={0}
+              width={contentDim.w}
+              height={contentDim.h}
+              fill="#fafafa"
+              className={panning ? "cursor-grabbing" : "cursor-grab"}
+              onPointerDown={onBackdropPointerDown}
+              onPointerMove={onBackdropPointerMove}
+              onPointerUp={onBackdropPointerUp}
+              onPointerCancel={onBackdropPointerUp}
+            />
+
             {/* 分类网格列头 */}
             {gridHeaders.map(({ type, x, y }) => (
-              <g key={type}>
+              <g key={type} className="pointer-events-none">
                 <rect
                   x={x - 28} y={y - 12}
                   width={56} height={22}
@@ -472,23 +861,31 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
 
             {/* 放射状同心圆背景 */}
             {layout === "radial" && (() => {
-              const cx = dim.w / 2, cy = dim.h / 2;
-              const maxR = Math.min(dim.w, dim.h) * 0.43;
+              const cx = contentDim.w / 2, cy = contentDim.h / 2;
+              const maxR = Math.min(contentDim.w, contentDim.h) * 0.43;
               const rings = new Set(posRef.current.map((p) => {
                 const dx = p.x - cx, dy = p.y - cy;
                 return Math.round(Math.sqrt(dx * dx + dy * dy) / (maxR / 4));
               }));
-              return [...rings].filter((r) => r > 0).map((r) => (
-                <circle key={r} cx={cx} cy={cy} r={r * (maxR / 4)} fill="none" stroke="#f1f5f9" strokeWidth={1} strokeDasharray="4 4" />
-              ));
+              return (
+                <g className="pointer-events-none">
+                  {[...rings].filter((r) => r > 0).map((r) => (
+                    <circle key={r} cx={cx} cy={cy} r={r * (maxR / 4)} fill="none" stroke="#f1f5f9" strokeWidth={1} strokeDasharray="4 4" />
+                  ))}
+                </g>
+              );
             })()}
 
             {/* 层级树横向分隔线 */}
             {layout === "tree" && (() => {
               const lvSet = new Set(posRef.current.map((p) => Math.round(p.y / 40) * 40));
-              return [...lvSet].map((y) => (
-                <line key={y} x1={PADDING} y1={y} x2={dim.w - PADDING} y2={y} stroke="#f1f5f9" strokeWidth={1} strokeDasharray="4 4" />
-              ));
+              return (
+                <g className="pointer-events-none">
+                  {[...lvSet].map((y) => (
+                    <line key={y} x1={PADDING} y1={y} x2={contentDim.w - PADDING} y2={y} stroke="#f1f5f9" strokeWidth={1} strokeDasharray="4 4" />
+                  ))}
+                </g>
+              );
             })()}
 
             {/* 边 */}
@@ -508,7 +905,7 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
               const qx = mx + nx, qy = my + ny;
 
               return (
-                <g key={i} opacity={selected && !isActive ? 0.12 : 1} className="transition-opacity duration-200">
+                <g key={i} opacity={selected && !isActive ? 0.12 : 1} className="pointer-events-none transition-opacity duration-200">
                   <path
                     d={bend === 0
                       ? `M${src.x},${src.y} L${tgt.x},${tgt.y}`
@@ -560,13 +957,13 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
                 >
                   {(isSelected || isHovered) && (
                     <g opacity={0.15}>
-                      <NodeShape shape={c.shape} r={r + 9} fill={c.stroke} stroke="none" strokeWidth={0} />
+                      <NodeShape shape={c?.shape} r={r + 9} fill={c?.stroke} stroke="none" strokeWidth={0} />
                     </g>
                   )}
                   <NodeShape
-                    shape={c.shape}
+                    shape={c?.shape}
                     r={r}
-                    fill={c.fill}
+                    fill={c?.fill}
                     stroke={isSelected || isConnected ? c.stroke : "#e2e8f0"}
                     strokeWidth={isSelected ? 2.5 : 1.5}
                     filter="url(#shadow)"
@@ -576,7 +973,7 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
                     dy="0.35em"
                     fontSize={node.name.length > 4 ? 9 : 11}
                     fontWeight="600"
-                    fill={c.text}
+                    fill={c?.text}
                     className="pointer-events-none select-none"
                   >
                     {node.name.length > 6 ? node.name.slice(0, 5) + "…" : node.name}
@@ -588,7 +985,7 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
         </div>
 
         {/* 图例 + 当前布局说明 */}
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-zinc-100 px-4 py-3">
+        <div className="flex shrink-0 flex-wrap items-center gap-x-5 gap-y-1.5 border-t border-zinc-100 px-4 py-3">
           {(Object.keys(COLORS) as NodeType[]).map((type) => (
             <span key={type} className="flex items-center gap-1.5 text-xs text-zinc-600">
               <LegendShapeIcon type={type} />
@@ -596,7 +993,7 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
             </span>
           ))}
           <span className="ml-auto text-xs text-zinc-400">
-            {LAYOUT_META.find((m) => m.id === layout)?.hint} · 点击节点查看详情 · 可拖拽
+            {LAYOUT_META.find((m) => m.id === layout)?.hint} · 空白处拖动平移 · 滚轮缩放 · 节点可拖拽
           </span>
         </div>
       </div>
@@ -619,9 +1016,9 @@ export function KnowledgeGraph({ data: dataProp, svgId }: Props) {
           <p className="mb-3 text-sm leading-relaxed text-zinc-600">{selected.description}</p>
           {nodeConnections.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {nodeConnections.map(({ node, rel, dir }) => (
+              {nodeConnections.map(({ node, rel, dir }, ci) => (
                 <button
-                  key={node.id}
+                  key={`${node.id}-${rel}-${dir}-${ci}`}
                   onClick={() => setSelected(node)}
                   className="flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700 transition hover:border-zinc-300 hover:bg-zinc-100"
                 >

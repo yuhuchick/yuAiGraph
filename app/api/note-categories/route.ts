@@ -5,10 +5,8 @@ const JAVA = process.env.JAVA_API_BASE ?? "http://localhost:8080";
 
 export async function GET(request: NextRequest) {
   const token = request.headers.get("authorization") ?? "";
-  const qs = request.nextUrl.searchParams.toString();
-  const suffix = qs ? `?${qs}` : "";
 
-  const res = await fetch(`${JAVA}/api/v1/notes${suffix}`, {
+  const res = await fetch(`${JAVA}/api/v1/note-categories`, {
     headers: { authorization: token },
     cache: "no-store",
   });

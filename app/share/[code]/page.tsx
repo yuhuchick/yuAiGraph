@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { GitHubRepoLinks } from "@/components/layout/github-repo-links";
 import { ChartExportProvider } from "@/components/graph/chart-export-context";
 import { NoteGraphStack } from "@/components/graph/note-graph-stack";
 import { ExportMenu } from "@/components/note/export-menu";
@@ -40,6 +41,7 @@ export default function SharedNotePage() {
           </Link>
 
           <div className="flex items-center gap-2">
+            <GitHubRepoLinks compact className="mr-1 border-0 pl-0" />
             {data && (
               <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                 data.permission === "edit"

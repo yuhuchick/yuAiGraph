@@ -3,14 +3,16 @@ import { unwrapResult } from "@/lib/proxy";
 
 const JAVA = process.env.JAVA_API_BASE ?? "http://localhost:8080";
 
-export async function GET(request: NextRequest) {
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ jobId: string }> },
+) {
+  const { jobId } = await context.params;
   const token = request.headers.get("authorization") ?? "";
-  const qs = request.nextUrl.searchParams.toString();
-  const suffix = qs ? `?${qs}` : "";
 
-  const res = await fetch(`${JAVA}/api/v1/notes${suffix}`, {
+  const res = await fetch(`${JAVA}/api/v1/ai/parse-cancel/${encodeURIComponent(jobId)}`, {
+    method: "POST",
     headers: { authorization: token },
-    cache: "no-store",
   });
 
   const { body, status } = await unwrapResult(res);
