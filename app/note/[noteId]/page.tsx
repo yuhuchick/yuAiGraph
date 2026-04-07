@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/app-header";
+import { ChartExportProvider } from "@/components/graph/chart-export-context";
 import { NoteGraphStack } from "@/components/graph/note-graph-stack";
 import { VoiceQA } from "@/components/qa/voice-qa";
 import { ShareDialog } from "@/components/note/share-dialog";
@@ -67,64 +68,67 @@ export default function NoteDetailPage() {
           <span className="font-medium text-zinc-700">{note?.name ?? "笔记详情"}</span>
         </nav>
 
-        {/* Note header */}
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-lg font-bold text-zinc-900">{note?.name ?? "知识图谱"}</h1>
-            {note && (
-              <p className="mt-1 text-xs text-zinc-400">
-                {note.nodeCount} 个节点 · 创建于 {note.createdAt}
-              </p>
-            )}
+        <ChartExportProvider>
+          {/* Note header */}
+          <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h1 className="text-lg font-bold text-zinc-900">{note?.name ?? "知识图谱"}</h1>
+              {note && (
+                <p className="mt-1 text-xs text-zinc-400">
+                  {note.nodeCount} 个节点 · 创建于 {note.createdAt}
+                </p>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-2">
+              <ExportMenu
+                noteName={note?.name ?? "图谱"}
+                graphData={graphData}
+                svgId={GRAPH_SVG_ID}
+              />
+              <button
+                type="button"
+                onClick={() => setShowShare(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
+              >
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <circle cx="9.5" cy="2.5" r="1.5" stroke="currentColor" strokeWidth="1.2" />
+                  <circle cx="2.5" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.2" />
+                  <circle cx="9.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.2" />
+                  <path d="M4 6.75 8 9M4 5.25 8 2.75" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                </svg>
+                分享
+              </button>
+            </div>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-2">
-            <ExportMenu
-              noteName={note?.name ?? "图谱"}
-              graphData={graphData}
-              svgId={GRAPH_SVG_ID}
-            />
-            <button
-              onClick={() => setShowShare(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-medium text-zinc-600 shadow-sm transition hover:border-zinc-300 hover:bg-zinc-50"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <circle cx="9.5" cy="2.5" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-                <circle cx="2.5" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-                <circle cx="9.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.2" />
-                <path d="M4 6.75 8 9M4 5.25 8 2.75" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-              </svg>
-              分享
-            </button>
+          {/* Tab bar */}
+          <div className="mb-5 inline-flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
+            {(["graph", "list"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`rounded-lg px-4 py-1.5 text-xs font-medium transition ${
+                  activeTab === tab
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-zinc-500 hover:text-zinc-800"
+                }`}
+              >
+                {tab === "graph" ? "图谱视图" : "节点列表"}
+              </button>
+            ))}
           </div>
-        </div>
 
-        {/* Tab bar */}
-        <div className="mb-5 inline-flex rounded-xl border border-zinc-200 bg-white p-1 shadow-sm">
-          {(["graph", "list"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`rounded-lg px-4 py-1.5 text-xs font-medium transition ${
-                activeTab === tab
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-zinc-500 hover:text-zinc-800"
-              }`}
-            >
-              {tab === "graph" ? "图谱视图" : "节点列表"}
-            </button>
-          ))}
-        </div>
-
-        {/* Content grid */}
-        <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
-          <div>
-            {loading ? (
-              <Skeleton />
-            ) : activeTab === "graph" ? (
-              <NoteGraphStack data={graphData} svgId={GRAPH_SVG_ID} />
-            ) : (
+          {/* Content grid */}
+          <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
+            <div>
+              {loading ? (
+                <Skeleton />
+              ) : activeTab === "graph" ? (
+                <NoteGraphStack data={graphData} svgId={GRAPH_SVG_ID} />
+              ) : (
               /* Node list view */
               <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
                 <div className="border-b border-zinc-100 px-4 py-3">
@@ -171,14 +175,15 @@ export default function NoteDetailPage() {
                   </ul>
                 </div>
               </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* QA panel */}
-          <aside className="lg:sticky lg:top-20 lg:self-start">
-            <VoiceQA noteId={noteId} />
-          </aside>
-        </div>
+            {/* QA panel */}
+            <aside className="lg:sticky lg:top-20 lg:self-start">
+              <VoiceQA noteId={noteId} />
+            </aside>
+          </div>
+        </ChartExportProvider>
       </main>
 
       {/* 分享对话框 */}

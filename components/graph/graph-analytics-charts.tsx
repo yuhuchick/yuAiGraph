@@ -1,9 +1,44 @@
 "use client";
 
-import { useMemo } from "react";
+import type { EChartsOption } from "echarts";
+import { useEffect, useMemo, useRef } from "react";
 import ReactECharts from "echarts-for-react";
 import type { GraphData } from "@/lib/types";
+import { useChartExport } from "@/components/graph/chart-export-context";
 import { buildInsightChartOption, getGraphChartDefinitions } from "@/lib/chart-registry";
+
+function RegisteredEChart({
+  exportId,
+  title,
+  option,
+}: {
+  exportId: string;
+  title: string;
+  option: EChartsOption;
+}) {
+  const chartExport = useChartExport();
+  const ref = useRef<InstanceType<typeof ReactECharts>>(null);
+
+  useEffect(() => {
+    if (!chartExport) return;
+    return chartExport.register({
+      id: exportId,
+      title,
+      getInstance: () => ref.current?.getEchartsInstance() ?? null,
+    });
+  }, [chartExport, exportId, title]);
+
+  return (
+    <ReactECharts
+      ref={ref}
+      option={option}
+      style={{ width: "100%", height: 300 }}
+      opts={{ renderer: "canvas" }}
+      notMerge
+      lazyUpdate
+    />
+  );
+}
 
 interface Props {
   data: GraphData;
@@ -62,13 +97,7 @@ export function GraphAnalyticsCharts({ data }: Props) {
                   ) : null}
                 </header>
                 <div className="w-full p-2" style={{ minHeight: 300 }}>
-                  <ReactECharts
-                    option={option}
-                    style={{ width: "100%", height: 300 }}
-                    opts={{ renderer: "canvas" }}
-                    notMerge
-                    lazyUpdate
-                  />
+                  <RegisteredEChart exportId={`insight-${spec.id}`} title={spec.title} option={option} />
                 </div>
               </article>
             ))}
@@ -90,13 +119,7 @@ export function GraphAnalyticsCharts({ data }: Props) {
                   <p className="mt-0.5 text-xs text-zinc-400">{def.description}</p>
                 </header>
                 <div className="w-full p-2" style={{ minHeight: 300 }}>
-                  <ReactECharts
-                    option={option}
-                    style={{ width: "100%", height: 300 }}
-                    opts={{ renderer: "canvas" }}
-                    notMerge
-                    lazyUpdate
-                  />
+                  <RegisteredEChart exportId={`structure-${def.id}`} title={def.title} option={option} />
                 </div>
               </article>
             ))}

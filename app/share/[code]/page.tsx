@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ChartExportProvider } from "@/components/graph/chart-export-context";
 import { NoteGraphStack } from "@/components/graph/note-graph-stack";
 import { ExportMenu } from "@/components/note/export-menu";
 import { api, ApiError } from "@/lib/api";
@@ -74,7 +75,7 @@ export default function SharedNotePage() {
             </Link>
           </div>
         ) : data ? (
-          <>
+          <ChartExportProvider>
             {/* 标题栏 */}
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
               <div>
@@ -109,7 +110,7 @@ export default function SharedNotePage() {
                 </svg>
               </Link>
             </div>
-          </>
+          </ChartExportProvider>
         ) : null}
       </main>
     </div>

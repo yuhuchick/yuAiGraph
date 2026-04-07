@@ -1,8 +1,8 @@
 "use client";
 
 import type { GraphData } from "@/lib/types";
-import { KnowledgeGraph } from "@/components/graph/knowledge-graph";
 import { GraphAnalyticsCharts } from "@/components/graph/graph-analytics-charts";
+import { KnowledgeGraph } from "@/components/graph/knowledge-graph";
 
 interface Props {
   data: GraphData;
