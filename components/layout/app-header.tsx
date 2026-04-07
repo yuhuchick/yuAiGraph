@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { getUser, logout } from "@/lib/auth";
+import { getToken, getUser, isTokenExpired, logout, logoutSessionRedirect } from "@/lib/auth";
 import type { UserInfo } from "@/lib/auth";
 
 const NAV_ITEMS = [
@@ -17,10 +17,27 @@ export function AppHeader() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // 客户端挂载后读取 localStorage
+  // 路由变化时：先检查 JWT 是否过期，再同步用户信息
   useEffect(() => {
+    const token = getToken();
+    if (token && isTokenExpired(token)) {
+      logoutSessionRedirect();
+      return;
+    }
     setUser(getUser());
-  }, [pathname]); // pathname 变化时重新读（登录后跳转可立即更新）
+  }, [pathname]);
+
+  // 已登录时定时检查过期（后台挂久了也能自动下线）
+  useEffect(() => {
+    if (!user) return;
+    const id = window.setInterval(() => {
+      const t = getToken();
+      if (t && isTokenExpired(t)) {
+        logoutSessionRedirect();
+      }
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, [user]);
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -37,7 +54,7 @@ export function AppHeader() {
     logout();
     setUser(null);
     setMenuOpen(false);
-    router.push("/login");
+    router.replace("/login");
   };
 
   return (

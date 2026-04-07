@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { authHeaders } from "@/lib/auth";
+import { ApiError, fetchWithAuth } from "@/lib/api";
 
 interface Message {
   id: number;
@@ -51,13 +51,15 @@ export function VoiceQA({ noteId }: Props) {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/ai/chat", {
+      const res = await fetchWithAuth("/api/ai/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ noteId, question }),
       });
 
-      if (!res.ok || !res.body) throw new Error("请求失败");
+      if (!res.ok || !res.body) {
+        throw new ApiError(res.status, "请求失败");
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -85,6 +87,9 @@ export function VoiceQA({ noteId }: Props) {
         prev.map((m) => (m.id === replyId ? { ...m, streaming: false } : m)),
       );
     } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        return;
+      }
       console.error(err);
       setMessages((prev) =>
         prev.map((m) =>

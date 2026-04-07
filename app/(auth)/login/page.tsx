@@ -13,6 +13,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const sessionExpired = searchParams.get("session") === "expired";
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -82,6 +83,11 @@ function LoginForm() {
           </p>
 
           <form className="space-y-4" onSubmit={onSubmit}>
+            {sessionExpired && (
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                登录已过期，请重新登录后继续操作。
+              </p>
+            )}
             <div className="space-y-1.5">
               <label className="block text-xs font-medium text-zinc-700">邮箱地址</label>
               <input

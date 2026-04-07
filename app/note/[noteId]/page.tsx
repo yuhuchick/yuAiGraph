@@ -43,8 +43,11 @@ export default function NoteDetailPage() {
         setNote((notes ?? []).find((n) => n.id === noteId) ?? null);
       })
       .catch((err: unknown) => {
-        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
-          router.replace(`/login?redirect=/note/${noteId}`);
+        if (err instanceof ApiError && err.status === 401) {
+          return;
+        }
+        if (err instanceof ApiError && err.status === 403) {
+          router.replace(`/login?redirect=${encodeURIComponent(`/note/${noteId}`)}`);
         }
       })
       .finally(() => setLoading(false));

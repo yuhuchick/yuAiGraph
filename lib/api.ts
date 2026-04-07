@@ -6,7 +6,12 @@ import {
   SharedGraphData,
   ShareResponse,
 } from "@/lib/types";
-import { authHeaders } from "@/lib/auth";
+import {
+  authHeaders,
+  getToken,
+  isTokenExpired,
+  logoutSessionRedirect,
+} from "@/lib/auth";
 
 // ─── 错误类 ───────────────────────────────────────────────────────
 
@@ -32,11 +37,48 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-function authRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  return request<T>(path, {
+async function authRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  if (typeof window !== "undefined") {
+    const token = getToken();
+    if (token && isTokenExpired(token)) {
+      logoutSessionRedirect();
+      throw new ApiError(401, "登录已过期，请重新登录");
+    }
+  }
+  try {
+    return await request<T>(path, {
+      ...init,
+      headers: { ...authHeaders(), ...(init?.headers as Record<string, string> | undefined) },
+    });
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 401 && typeof window !== "undefined") {
+      logoutSessionRedirect();
+    }
+    throw e;
+  }
+}
+
+/**
+ * 带鉴权的 fetch（用于流式等非 JSON 场景）。401 或本地 JWT 过期时会触发登出跳转。
+ */
+export async function fetchWithAuth(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  if (typeof window !== "undefined") {
+    const token = getToken();
+    if (token && isTokenExpired(token)) {
+      logoutSessionRedirect();
+      throw new ApiError(401, "登录已过期，请重新登录");
+    }
+  }
+  const res = await fetch(input, {
     ...init,
+    cache: "no-store",
     headers: { ...authHeaders(), ...(init?.headers as Record<string, string> | undefined) },
   });
+  if (res.status === 401 && typeof window !== "undefined") {
+    logoutSessionRedirect();
+    throw new ApiError(401, "未授权，请重新登录");
+  }
+  return res;
 }
 
 // ─── 认证模块 ─────────────────────────────────────────────────────
@@ -102,9 +144,9 @@ export const api = {
    * 不经过 request() 封装，因为需要流式消费而非一次性 json()。
    */
   async chatStream(noteId: string, question: string): Promise<Response> {
-    const res = await fetch("/api/ai/chat", {
+    const res = await fetchWithAuth("/api/ai/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ noteId, question }),
     });
     if (!res.ok) {
