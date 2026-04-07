@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { ApiError, fetchWithAuth } from "@/lib/api";
+import { AssistantMarkdown } from "@/components/qa/assistant-markdown";
 
 interface Message {
   id: number;
@@ -153,14 +154,15 @@ export function VoiceQA({ noteId }: Props) {
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:150ms]" />
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-zinc-400 [animation-delay:300ms]" />
                 </span>
-              ) : (
-                // 直接渲染流式内容，streaming 时末尾加光标
+              ) : msg.role === "assistant" ? (
                 <>
-                  {msg.content}
+                  <AssistantMarkdown content={msg.content} />
                   {msg.streaming && (
                     <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-indigo-500 align-middle" />
                   )}
                 </>
+              ) : (
+                <span className="whitespace-pre-wrap break-words">{msg.content}</span>
               )}
             </div>
           </div>
