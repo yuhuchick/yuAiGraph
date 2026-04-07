@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI 知识图谱笔记
 
-## Getting Started
+基于 **Next.js** 的 Web 前端，通过 **App Router API 路由** 代理到 **Spring Boot** 后端，实现文档解析、知识图谱可视化、AI 问答与分享等功能。
 
-First, run the development server:
+## 架构说明
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+浏览器 → Vercel（Next.js）→ /api/* 服务端代理 → Java 后端 → MySQL
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- 浏览器只请求同源 `/api/*`，JWT 与业务逻辑在服务端转发，避免在浏览器直连后端域名。
+- 本地开发时，将 `JAVA_API_BASE` 指向 `http://localhost:8080`。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 技术栈
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| 层级 | 技术 |
+|------|------|
+| 前端 | Next.js 16、React 19、TypeScript、Tailwind CSS 4 |
+| BFF | Next.js Route Handlers（`app/api/**/route.ts`） |
+| 后端 | 见同工作区或独立仓库中的 **Java Spring Boot** 项目（`ai-back`） |
 
-## Learn More
+## 环境变量
 
-To learn more about Next.js, take a look at the following resources:
+复制 `.env.example` 为 `.env.local`：
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| 变量 | 说明 |
+|------|------|
+| `JAVA_API_BASE` | Java API 根地址。本地：`http://localhost:8080`；Vercel 生产：`https://你的 API 域名`（无尾斜杠） |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+生产环境在 **Vercel → Project → Settings → Environment Variables** 中配置 `JAVA_API_BASE`，修改后需重新部署。
 
-## Deploy on Vercel
+## 本地开发
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm install
+npm run dev
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+默认 <http://localhost:3000>。请先启动后端（见 `ai-back` README），否则登录、笔记等接口会失败。
+
+```bash
+npm run build   # 生产构建
+npm run start   # 本地预览生产构建
+npm run lint
+```
+
+## 部署（前端）
+
+推荐 **Vercel**：连接 Git 仓库，配置 `JAVA_API_BASE` 指向公网可访问的 HTTPS 后端地址。
+
+注意：`api` 子域名建议 **DNS 直连源站**，不要对 API 域名套 CDN（否则易出现 TLS/403 等问题）。
+
+## 仓库中的脚本
+
+- `deploy.sh`：在 **自建 Linux 服务器** 上部署前端时使用（需 Node、PM2、Nginx 等）。若仅使用 Vercel 部署前端，可忽略。
+
+## 相关仓库
+
+- 后端 Java 服务：与本项目配套的 Spring Boot 应用（例如仓库名 `yuAiGraph-back` / `ai-back`）。
+
+## 知识图谱可视化
+
+- **交互 SVG 图谱**：`components/graph/knowledge-graph.tsx`（力导向 / 树 / 放射 / 网格等布局）。
+- **多图表看板**：同一笔记在下方展示多块 **ECharts**（饼图、柱状图、折线图、雷达图、力导向网络等），数据均来自同一份 `GraphData`。
+- **扩展新图表类型**：在 `lib/chart-registry.ts` 中调用 `registerGraphChart({ id, title, description, buildOption })`，或在应用入口集中注册；内置列表由 `getGraphChartDefinitions()` 返回。
+
+## 更多信息
+
+- Next.js 行为以项目内 `node_modules/next` 文档为准（本项目使用的 Next 版本可能与公开文档有差异）。
+- 代理与统一响应格式见 `lib/proxy.ts`、`lib/api.ts`。

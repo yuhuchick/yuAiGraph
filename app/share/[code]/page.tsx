@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { KnowledgeGraph } from "@/components/graph/knowledge-graph";
+import { NoteGraphStack } from "@/components/graph/note-graph-stack";
 import { ExportMenu } from "@/components/note/export-menu";
 import { api, ApiError } from "@/lib/api";
 import type { SharedGraphData } from "@/lib/types";
@@ -93,7 +93,7 @@ export default function SharedNotePage() {
             </div>
 
             {/* 图谱 */}
-            <KnowledgeGraph data={data.graph} svgId="shared-graph-svg" />
+            <NoteGraphStack data={data.graph} svgId="shared-graph-svg" />
 
             {/* 引导注册 */}
             <div className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50 px-6 py-5 text-center">

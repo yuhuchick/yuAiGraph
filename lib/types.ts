@@ -51,9 +51,32 @@ export interface GraphLink {
   relationship: string;
 }
 
+/** 与 Java InsightSeriesDto 对齐 */
+export interface InsightSeries {
+  name: string;
+  data: number[];
+}
+
+/**
+ * AI 根据文档语义生成的单张图表规格（与 Java InsightChartSpecDto 对齐）。
+ * chartType：pie | bar | line | radar | scatter
+ */
+export interface InsightChartSpec {
+  id: string;
+  title: string;
+  rationale?: string;
+  chartType: string;
+  categories?: string[];
+  series?: InsightSeries[];
+  /** scatter：[[x,y], ...] */
+  scatterPoints?: number[][];
+}
+
 export interface GraphData {
   nodes: GraphNode[];
   links: GraphLink[];
+  /** 文档语义驱动的多视角图表；旧数据或纯结构统计场景可能为空 */
+  insightCharts?: InsightChartSpec[];
 }
 
 export interface NoteItem {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/layout/app-header";
-import { KnowledgeGraph } from "@/components/graph/knowledge-graph";
+import { NoteGraphStack } from "@/components/graph/note-graph-stack";
 import { VoiceQA } from "@/components/qa/voice-qa";
 import { ShareDialog } from "@/components/note/share-dialog";
 import { ExportMenu } from "@/components/note/export-menu";
@@ -120,7 +120,7 @@ export default function NoteDetailPage() {
             {loading ? (
               <Skeleton />
             ) : activeTab === "graph" ? (
-              <KnowledgeGraph data={graphData} svgId={GRAPH_SVG_ID} />
+              <NoteGraphStack data={graphData} svgId={GRAPH_SVG_ID} />
             ) : (
               /* Node list view */
               <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm overflow-hidden">
