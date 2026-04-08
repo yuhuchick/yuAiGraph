@@ -1,8 +1,12 @@
 import {
+  AdminOverview,
+  AdminPromptConfig,
+  AdminUserRow,
   AuthResponse,
   GraphData,
   NoteItem,
   NoteListResponse,
+  PageDto,
   ParseJobInfo,
   SharedGraphData,
   ShareResponse,
@@ -98,6 +102,87 @@ export const api = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),
+    });
+  },
+
+  fetchAdminOverview(): Promise<AdminOverview> {
+    return authRequest<AdminOverview | null>("/api/admin/overview").then((d) => {
+      if (!d) throw new ApiError(500, "管理员概览数据为空");
+      return d;
+    });
+  },
+
+  fetchAdminUsers(params?: {
+    page?: number;
+    size?: number;
+    keyword?: string;
+    role?: "" | "USER" | "ADMIN";
+  }): Promise<PageDto<AdminUserRow>> {
+    const sp = new URLSearchParams();
+    if (params?.page != null) sp.set("page", String(params.page));
+    if (params?.size != null) sp.set("size", String(params.size));
+    if (params?.keyword) sp.set("keyword", params.keyword);
+    if (params?.role) sp.set("role", params.role);
+    const qs = sp.toString();
+    return authRequest<PageDto<AdminUserRow> | null>(
+      `/api/admin/users${qs ? `?${qs}` : ""}`,
+    ).then((d) => {
+      if (!d) throw new ApiError(500, "用户列表为空");
+      return d;
+    });
+  },
+
+  createAdminUser(payload: {
+    username: string;
+    email: string;
+    password: string;
+    role: "USER" | "ADMIN";
+  }): Promise<AdminUserRow> {
+    return authRequest<AdminUserRow | null>("/api/admin/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then((d) => {
+      if (!d) throw new ApiError(500, "创建用户失败");
+      return d;
+    });
+  },
+
+  updateAdminUser(
+    id: number,
+    payload: {
+      username: string;
+      email: string;
+      role: "USER" | "ADMIN";
+      password?: string;
+    },
+  ): Promise<AdminUserRow> {
+    return authRequest<AdminUserRow | null>(`/api/admin/users/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).then((d) => {
+      if (!d) throw new ApiError(500, "更新用户失败");
+      return d;
+    });
+  },
+
+  deleteAdminUser(id: number): Promise<void> {
+    return authRequest<null>(`/api/admin/users/${id}`, { method: "DELETE" }).then(() => undefined);
+  },
+
+  fetchAdminPrompts(): Promise<AdminPromptConfig[]> {
+    return authRequest<AdminPromptConfig[] | null>("/api/admin/prompts").then((d) => d ?? []);
+  },
+
+  updateAdminPrompt(key: string, content: string): Promise<AdminPromptConfig> {
+    return authRequest<AdminPromptConfig | null>(`/api/admin/prompts/${encodeURIComponent(key)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content }),
+    }).then((d) => {
+      if (!d) throw new ApiError(500, "更新提示词失败");
+      return d;
     });
   },
 

@@ -17,6 +17,7 @@ export function AppHeader() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const isAdmin = user?.role === "ADMIN";
 
   // 路由变化时：先检查 JWT 是否过期，再同步用户信息
   useEffect(() => {
@@ -25,7 +26,9 @@ export function AppHeader() {
       logoutSessionRedirect();
       return;
     }
-    setUser(getUser());
+    const nextUser = getUser();
+    const id = window.setTimeout(() => setUser(nextUser), 0);
+    return () => window.clearTimeout(id);
   }, [pathname]);
 
   // 已登录时定时检查过期（后台挂久了也能自动下线）
@@ -90,6 +93,18 @@ export function AppHeader() {
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link
+              href="/admin/users"
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-all ${
+                pathname.startsWith("/admin")
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
+              }`}
+            >
+              管理后台
+            </Link>
+          )}
 
           <GitHubRepoLinks className="ml-2" />
 
@@ -138,6 +153,19 @@ export function AppHeader() {
                       </svg>
                       仪表盘
                     </Link>
+                    {isAdmin && (
+                      <Link
+                        href="/admin/users"
+                        onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-700 transition hover:bg-zinc-50"
+                      >
+                        <svg className="h-4 w-4 text-zinc-400" viewBox="0 0 16 16" fill="none">
+                          <path d="M8 2l5 2v4c0 3-2.1 5.3-5 6-2.9-.7-5-3-5-6V4l5-2z" stroke="currentColor" strokeWidth="1.3" />
+                          <path d="M5.5 8l1.5 1.5L10.5 6" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        管理后台
+                      </Link>
+                    )}
                     <button
                       onClick={handleLogout}
                       className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"

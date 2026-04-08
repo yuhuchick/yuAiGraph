@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /** 需要登录才能访问的路由前缀 */
-const PROTECTED_PREFIXES = ["/dashboard", "/note"];
+const PROTECTED_PREFIXES = ["/dashboard", "/note", "/admin"];
 /** 已登录用户应跳过的页面（避免重复登录） */
 const AUTH_ONLY_PREFIXES = ["/login", "/register"];
 

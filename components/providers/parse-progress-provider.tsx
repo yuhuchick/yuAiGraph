@@ -206,10 +206,8 @@ export function ParseProgressProvider({ children }: { children: React.ReactNode 
 
   return (
     <ParseProgressContext.Provider value={{ jobInfo, startPolling, cancelCurrentParse }}>
-      {showBanner && (
-        <ParseBanner info={jobInfo} onCancel={() => void cancelCurrentParse()} />
-      )}
-      {showBanner && <div className="h-14" />}
+    
+      {showBanner && <div/>}
       {children}
     </ParseProgressContext.Provider>
   );

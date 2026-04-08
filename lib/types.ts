@@ -20,8 +20,39 @@ export interface AuthResponse {
     id: number;
     username: string;
     email: string;
+    role: string;
     createdAt: string;
   };
+}
+
+export interface AdminUserRow {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
+export interface PageDto<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  page: number;
+  size: number;
+}
+
+export interface AdminOverview {
+  totalUsers: number;
+  adminUsers: number;
+  totalNotes: number;
+  recentUsers: AdminUserRow[];
+}
+
+export interface AdminPromptConfig {
+  key: string;
+  label: string;
+  content: string;
+  defaultContent: string;
 }
 
 // ─── 分享 ─────────────────────────────────────────────────────────
