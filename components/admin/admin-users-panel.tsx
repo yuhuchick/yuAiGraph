@@ -209,7 +209,13 @@ export function AdminUsersPanel({ onStatsRefresh }: { onStatsRefresh?: () => voi
           mode="create"
           onClose={() => setDialog(null)}
           onSubmit={async (payload) => {
-            await api.createAdminUser(payload);
+            if (!payload.password) return;
+            await api.createAdminUser({
+              username: payload.username,
+              email: payload.email,
+              password: payload.password,
+              role: payload.role,
+            });
             onStatsRefresh?.();
             setDialog(null);
             setPage(0);
