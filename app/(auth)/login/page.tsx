@@ -32,12 +32,12 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#f8f9fb]">
+    <div className="relative z-[1] flex min-h-screen bg-background">
       {/* Left decorative panel */}
       <div
         className="hidden flex-col justify-between p-10 lg:flex lg:w-[42%]"
         style={{
-          background: "linear-gradient(145deg, #4f46e5 0%, #7c3aed 60%, #0891b2 100%)",
+          background: "linear-gradient(155deg, #1c1917 0%, #7c2d12 42%, #166534 100%)",
         }}
       >
         <div className="flex items-center gap-2">
@@ -67,17 +67,17 @@ function LoginForm() {
       {/* Right form panel */}
       <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
         <div className="mb-8 flex items-center gap-2 lg:hidden">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">
             K
           </span>
-          <span className="text-base font-semibold text-zinc-900">知识图谱笔记</span>
+          <span className="font-serif text-base font-semibold text-foreground">知识图谱笔记</span>
         </div>
 
         <div className="w-full max-w-sm">
-          <h1 className="mb-1.5 text-2xl font-bold text-zinc-900">欢迎回来</h1>
-          <p className="mb-8 text-sm text-zinc-500">
+          <h1 className="mb-1.5 font-serif text-2xl font-semibold text-foreground">欢迎回来</h1>
+          <p className="mb-8 text-sm text-muted-foreground">
             还没有账号？{" "}
-            <Link href="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/register" className="font-medium text-primary hover:text-primary-hover">
               免费注册
             </Link>
           </p>
@@ -89,26 +89,26 @@ function LoginForm() {
               </p>
             )}
             <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-zinc-700">邮箱地址</label>
+              <label className="block text-xs font-medium text-foreground">邮箱地址</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 required
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 transition focus:border-indigo-400 focus:ring-3 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground transition focus:border-primary focus:ring-3 focus:ring-primary/15"
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-medium text-zinc-700">密码</label>
+              <label className="block text-xs font-medium text-foreground">密码</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 transition focus:border-indigo-400 focus:ring-3 focus:ring-indigo-100"
+                className="w-full rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none placeholder:text-muted-foreground transition focus:border-primary focus:ring-3 focus:ring-primary/15"
               />
             </div>
 
@@ -119,7 +119,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-500 active:scale-[0.98] disabled:opacity-60"
+              className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-white shadow-sm shadow-primary/20 transition hover:bg-primary-hover active:scale-[0.98] disabled:opacity-60"
             >
               {loading ? "登录中..." : "登录"}
             </button>

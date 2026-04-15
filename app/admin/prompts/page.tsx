@@ -86,7 +86,7 @@ function PromptCard({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={12}
-        className="w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-xs leading-5 text-zinc-800 outline-none focus:border-indigo-400"
+        className="w-full rounded-lg border border-border bg-card px-3 py-2 font-mono text-xs leading-5 text-foreground outline-none focus:border-primary"
       />
       <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
         <button
@@ -100,7 +100,7 @@ function PromptCard({
           type="button"
           disabled={saving}
           onClick={() => void onSave(item.key, content)}
-          className="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+          className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
         >
           {saving ? "保存中…" : "保存"}
         </button>

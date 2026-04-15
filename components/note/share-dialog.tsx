@@ -81,7 +81,7 @@ export function ShareDialog({ noteId, onClose }: Props) {
                   onClick={() => { setPermission(opt.value); setShareUrl(""); }}
                   className={`flex flex-col items-start gap-1 rounded-xl border p-3 text-left transition ${
                     permission === opt.value
-                      ? "border-indigo-400 bg-indigo-50 ring-1 ring-indigo-300"
+                      ? "border-primary bg-primary-light ring-1 ring-primary/30"
                       : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
                   }`}
                 >
@@ -97,7 +97,7 @@ export function ShareDialog({ noteId, onClose }: Props) {
           <button
             onClick={generate}
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:opacity-60"
           >
             {loading ? (
               <>

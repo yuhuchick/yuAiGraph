@@ -35,7 +35,7 @@ const mdComponents: Components = {
         type="checkbox"
         checked={Boolean(checked)}
         readOnly
-        className="mr-1.5 align-middle accent-indigo-600"
+        className="mr-1.5 align-middle accent-primary"
         {...props}
       />
     ) : (
@@ -58,7 +58,7 @@ const mdComponents: Components = {
   strong: ({ children }) => <strong className="font-semibold text-zinc-900">{children}</strong>,
   em: ({ children }) => <em className="italic">{children}</em>,
   blockquote: ({ children }) => (
-    <blockquote className="my-2 border-l-2 border-indigo-300 pl-3 text-zinc-600">{children}</blockquote>
+    <blockquote className="my-2 border-l-2 border-primary/35 pl-3 text-muted-foreground">{children}</blockquote>
   ),
   hr: () => <hr className="my-3 border-zinc-200" />,
   br: () => <br />,
@@ -79,7 +79,7 @@ const mdComponents: Components = {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="font-medium text-indigo-600 underline decoration-indigo-300 underline-offset-2 hover:text-indigo-500"
+      className="font-medium text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover"
     >
       {children}
     </a>

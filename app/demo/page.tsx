@@ -101,7 +101,7 @@ function DemoQaPanel({ sample }: { sample: DemoSampleId }) {
         </ul>
         <Link
           href={loginRedirect}
-          className="mt-2 block rounded-xl bg-indigo-600 py-2.5 text-center text-sm font-medium text-white transition hover:bg-indigo-500"
+          className="mt-2 block rounded-xl bg-primary py-2.5 text-center text-sm font-medium text-white transition hover:bg-primary-hover"
         >
           登录后体验问答
         </Link>
@@ -121,7 +121,7 @@ function DemoInner() {
   const title = getDemoPageTitle(sample);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
+    <div className="relative z-[1] min-h-screen bg-background">
       <AppHeader />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
@@ -137,8 +137,8 @@ function DemoInner() {
                 href={href}
                 className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
                   active
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-800"
-                    : "border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300"
+                    ? "border-primary bg-primary-light text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/30"
                 }`}
                 title={opt.hint}
               >
@@ -173,7 +173,7 @@ export default function DemoPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col bg-[#f8f9fb]">
+        <div className="relative z-[1] flex min-h-screen flex-col bg-background">
           <AppHeader />
           <p className="p-12 text-center text-sm text-zinc-500">加载演示…</p>
         </div>

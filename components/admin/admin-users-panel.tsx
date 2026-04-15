@@ -110,7 +110,7 @@ export function AdminUsersPanel({ onStatsRefresh }: { onStatsRefresh?: () => voi
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               placeholder="用户名 / 邮箱"
-              className="w-52 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-sm text-zinc-900 outline-none focus:border-indigo-400"
+              className="w-52 rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-foreground outline-none focus:border-primary"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs text-zinc-500">
@@ -159,7 +159,7 @@ export function AdminUsersPanel({ onStatsRefresh }: { onStatsRefresh?: () => voi
         <button
           type="button"
           onClick={() => setDialog("create")}
-          className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
+          className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-hover"
         >
           新建用户
         </button>
@@ -353,7 +353,7 @@ function UserFormDialog({
             type="button"
             disabled={saving}
             onClick={() => void handleSave()}
-            className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+            className="rounded-lg bg-primary px-3 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50"
           >
             {saving ? "保存中…" : "保存"}
           </button>

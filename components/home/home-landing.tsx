@@ -12,7 +12,7 @@ const HERO_TITLE_LINE2 = "结构化知识的下一代工作台";
 const HERO_TITLE_ARIA = `${HERO_TITLE_LINE1}。${HERO_TITLE_LINE2}`;
 
 const heroTitleClass =
-  "text-4xl font-bold leading-[1.12] tracking-tight text-zinc-900 sm:text-5xl lg:text-[3.25rem]";
+  "font-serif text-4xl font-semibold leading-[1.12] tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem]";
 
 function HeroTypewriterTitle({ instant }: { instant: boolean }) {
   const [line1, setLine1] = useState(() => (instant ? HERO_TITLE_LINE1 : ""));
@@ -57,7 +57,7 @@ function HeroTypewriterTitle({ instant }: { instant: boolean }) {
         <span className="gradient-text">{line2}</span>
         {!done && (
           <span
-            className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.08em] bg-indigo-500 align-middle animate-pulse"
+            className="ml-0.5 inline-block h-[0.85em] w-0.5 translate-y-[0.08em] bg-primary align-middle animate-pulse"
             aria-hidden
           />
         )}
@@ -71,29 +71,29 @@ const features = [
     icon: "⚡",
     title: "智能文档解析",
     desc: "支持 PDF、Word、TXT；异步任务进度可追踪。AI 抽取实体与关系，并按语义生成多类要点图（占比、对比、趋势等），告别单一视图。",
-    accent: "from-indigo-500/20 to-violet-500/10",
-    iconBg: "bg-indigo-500/10 text-indigo-600 ring-1 ring-indigo-500/20",
+    accent: "from-amber-700/18 to-orange-600/10",
+    iconBg: "bg-amber-900/10 text-amber-900 ring-1 ring-amber-800/25",
   },
   {
     icon: "◈",
     title: "交互式知识图谱",
     desc: "力导向、树形、放射、网格布局一键切换；节点拖拽、路径高亮。同屏叠加 ECharts 统计与网络视图，结构数据一眼对齐。",
-    accent: "from-violet-500/20 to-fuchsia-500/10",
-    iconBg: "bg-violet-500/10 text-violet-600 ring-1 ring-violet-500/20",
+    accent: "from-emerald-800/18 to-teal-700/10",
+    iconBg: "bg-emerald-900/10 text-emerald-900 ring-1 ring-emerald-800/25",
   },
   {
     icon: "◇",
     title: "图谱感知问答",
     desc: "基于当前笔记上下文与知识结构的流式对话，Markdown 实时渲染；适合复盘概念关系、快速检索要点。",
-    accent: "from-cyan-500/20 to-sky-500/10",
-    iconBg: "bg-cyan-500/10 text-cyan-600 ring-1 ring-cyan-500/20",
+    accent: "from-stone-600/18 to-stone-500/10",
+    iconBg: "bg-stone-700/10 text-stone-800 ring-1 ring-stone-600/25",
   },
   {
     icon: "⎘",
     title: "导出与协作",
     desc: "JSON 全量数据、知识图谱 SVG、图表 PNG 打包 ZIP 或完整资源包；生成分享链接，支持浏览 / 编辑权限控制。",
-    accent: "from-emerald-500/20 to-teal-500/10",
-    iconBg: "bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20",
+    accent: "from-orange-800/18 to-red-900/10",
+    iconBg: "bg-orange-900/10 text-orange-950 ring-1 ring-orange-800/25",
   },
 ];
 
@@ -142,7 +142,7 @@ export function HomeLanding() {
             className="pointer-events-none absolute -top-32 left-1/2 z-[1] h-[min(560px,90vw)] w-[min(560px,90vw)] -translate-x-1/2 rounded-full"
             style={{
               background:
-                "radial-gradient(circle at 40% 40%, rgba(99,102,241,0.35), rgba(139,92,246,0.15) 45%, transparent 70%)",
+                "radial-gradient(circle at 40% 40%, rgba(154,52,18,0.28), rgba(180,83,9,0.12) 45%, transparent 70%)",
               filter: "blur(48px)",
             }}
             animate={
@@ -159,7 +159,7 @@ export function HomeLanding() {
             aria-hidden
             className="pointer-events-none absolute -right-20 top-20 z-[1] h-64 w-64 rounded-full sm:h-80 sm:w-80"
             style={{
-              background: "radial-gradient(circle, rgba(6,182,212,0.25), transparent 65%)",
+              background: "radial-gradient(circle, rgba(22,101,52,0.22), transparent 65%)",
               filter: "blur(40px)",
             }}
             animate={
@@ -176,7 +176,7 @@ export function HomeLanding() {
             aria-hidden
             className="pointer-events-none absolute -left-16 bottom-10 z-[1] h-48 w-48 rounded-full sm:bottom-20"
             style={{
-              background: "radial-gradient(circle, rgba(124,58,237,0.2), transparent 65%)",
+              background: "radial-gradient(circle, rgba(120,113,108,0.25), transparent 65%)",
               filter: "blur(36px)",
             }}
             animate={
@@ -198,13 +198,13 @@ export function HomeLanding() {
               className="flex flex-col items-center"
             >
               <motion.div variants={staggerItem(reduce)}>
-                <span className="relative mb-6 inline-flex items-center gap-2 overflow-hidden rounded-full border border-indigo-200/80 bg-white/70 px-4 py-1.5 text-xs font-medium text-indigo-800 shadow-sm shadow-indigo-500/5 backdrop-blur-md">
+                <span className="relative mb-6 inline-flex items-center gap-2 overflow-hidden rounded-full border border-primary/25 bg-card/80 px-4 py-1.5 text-xs font-medium text-primary shadow-sm backdrop-blur-md">
                   <span className="relative flex h-2 w-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-40" />
-                    <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/40 opacity-50" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
                   </span>
                   Next.js · Spring Boot · 流式 AI
-                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-white/45 to-transparent animate-shimmer" />
+                  <span className="pointer-events-none absolute inset-0 bg-gradient-to-r from-transparent via-card/50 to-transparent animate-shimmer" />
                 </span>
               </motion.div>
 
@@ -217,19 +217,19 @@ export function HomeLanding() {
 
               <motion.p
                 variants={staggerItem(reduce)}
-                className="mx-auto max-w-2xl text-base leading-relaxed text-zinc-600 sm:text-lg"
+                className="mx-auto max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
               >
                 上传 PDF / Word / 文本
               </motion.p>
               <motion.p
                 variants={staggerItem(reduce)}
-                className="mx-auto mb-2 max-w-2xl text-base leading-relaxed text-zinc-600 sm:text-lg"
+                className="mx-auto mb-2 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg"
               >
                 由大模型抽取实体、关系与可量化要点
               </motion.p>
               <motion.p
                 variants={staggerItem(reduce)}
-                className="mb-8 text-xs font-medium uppercase tracking-[0.2em] text-indigo-500/90"
+                className="mb-8 text-xs font-medium uppercase tracking-[0.2em] text-primary/90"
               >
                 解析 · 可视化 · 对话 · 导出
               </motion.p>
@@ -241,7 +241,7 @@ export function HomeLanding() {
                 <motion.div whileHover={reduce ? {} : { scale: 1.03 }} whileTap={reduce ? {} : { scale: 0.98 }}>
                   <Link
                     href="/dashboard"
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:from-indigo-500 hover:to-violet-500 hover:shadow-indigo-500/35"
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-amber-800 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:from-primary-hover hover:to-amber-900 hover:shadow-primary/30"
                   >
                     开始使用
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
@@ -252,7 +252,7 @@ export function HomeLanding() {
                 <motion.div whileHover={reduce ? {} : { scale: 1.02 }} whileTap={reduce ? {} : { scale: 0.98 }}>
                   <Link
                     href="/demo"
-                    className="inline-flex items-center gap-2 rounded-xl border border-zinc-200/90 bg-white/90 px-7 py-3.5 text-sm font-semibold text-zinc-800 shadow-sm backdrop-blur-sm transition hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-900"
+                    className="inline-flex items-center gap-2 rounded-xl border border-border bg-card/90 px-7 py-3.5 text-sm font-semibold text-foreground shadow-sm backdrop-blur-sm transition hover:border-primary/35 hover:bg-primary-light/80 hover:text-primary"
                   >
                     零登录体验演示
                   </Link>
@@ -263,7 +263,7 @@ export function HomeLanding() {
         </section>
 
         {/* ── Stats ── */}
-        <section className="relative border-y border-zinc-200/80 bg-white/70 backdrop-blur-sm">
+        <section className="relative border-y border-border/90 bg-card/75 backdrop-blur-sm">
           <div className="mx-auto grid max-w-5xl grid-cols-2 sm:grid-cols-4">
             {stats.map((s, i) => (
               <motion.div
@@ -272,13 +272,13 @@ export function HomeLanding() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-20px" }}
                 transition={{ delay: reduce ? 0 : i * 0.07, duration: 0.4 }}
-                className="flex flex-col items-center gap-0.5 border-b border-zinc-100 py-8 text-center sm:border-b-0 sm:border-r sm:border-zinc-100 sm:last:border-r-0"
+                className="flex flex-col items-center gap-0.5 border-b border-border py-8 text-center sm:border-b-0 sm:border-r sm:border-border sm:last:border-r-0"
               >
-                <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-2xl font-bold tabular-nums text-transparent sm:text-3xl">
+                <span className="bg-gradient-to-r from-primary via-amber-800 to-accent bg-clip-text font-mono text-2xl font-semibold tabular-nums text-transparent sm:text-3xl">
                   {s.value}
                 </span>
-                <span className="text-xs font-semibold text-zinc-800">{s.label}</span>
-                <span className="text-[10px] text-zinc-400">{s.sub}</span>
+                <span className="text-xs font-semibold text-foreground">{s.label}</span>
+                <span className="text-[10px] text-muted-foreground">{s.sub}</span>
               </motion.div>
             ))}
           </div>
@@ -293,10 +293,10 @@ export function HomeLanding() {
             transition={{ duration: reduce ? 0 : 0.5 }}
             className="mb-14 text-center"
           >
-            <h2 className="mb-3 text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+            <h2 className="mb-3 font-serif text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               全链路能力，为深度阅读而生
             </h2>
-            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-zinc-500 sm:text-base">
+            <p className="mx-auto max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
               从非结构化文本到可计算、可分享的知识资产——前后端分离架构，API 经 BFF 同源代理，兼顾安全与体验。
             </p>
           </motion.div>
@@ -310,7 +310,7 @@ export function HomeLanding() {
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ delay: reduce ? 0 : i * 0.08, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
                 whileHover={reduce ? {} : { y: -6, transition: { type: "spring", stiffness: 400, damping: 22 } }}
-                className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-zinc-200/90 bg-white/90 p-5 shadow-sm shadow-zinc-900/5 backdrop-blur-sm transition-[box-shadow] hover:border-indigo-200/80 hover:shadow-lg hover:shadow-indigo-500/10"
+                className="group relative flex flex-col gap-3 overflow-hidden rounded-2xl border border-border bg-card/90 p-5 shadow-sm shadow-stone-900/5 backdrop-blur-sm transition-[box-shadow] hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10"
               >
                 <div
                   aria-hidden
@@ -321,8 +321,8 @@ export function HomeLanding() {
                 >
                   {f.icon}
                 </span>
-                <h3 className="relative text-sm font-semibold text-zinc-900">{f.title}</h3>
-                <p className="relative text-sm leading-relaxed text-zinc-500">{f.desc}</p>
+                <h3 className="relative font-serif text-sm font-semibold text-foreground">{f.title}</h3>
+                <p className="relative text-sm leading-relaxed text-muted-foreground">{f.desc}</p>
               </motion.article>
             ))}
           </div>
@@ -335,14 +335,14 @@ export function HomeLanding() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: reduce ? 0 : 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-indigo-700 px-8 py-14 text-center shadow-2xl shadow-indigo-500/25"
+            className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-stone-900 via-primary to-stone-950 px-8 py-14 text-center shadow-2xl shadow-stone-900/35"
           >
             <motion.div
               aria-hidden
               className="pointer-events-none absolute inset-0 opacity-40"
               style={{
                 background:
-                  "radial-gradient(ellipse 80% 60% at 20% 0%, rgba(255,255,255,0.35), transparent), radial-gradient(ellipse 60% 50% at 100% 100%, rgba(6,182,212,0.35), transparent)",
+                  "radial-gradient(ellipse 80% 60% at 20% 0%, rgba(255,252,246,0.28), transparent), radial-gradient(ellipse 60% 50% at 100% 100%, rgba(22,101,52,0.35), transparent)",
               }}
               animate={reduce ? {} : { opacity: [0.35, 0.5, 0.35] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
@@ -351,16 +351,16 @@ export function HomeLanding() {
               aria-hidden
               className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:24px_24px]"
             />
-            <h2 className="relative mb-3 text-2xl font-bold text-white sm:text-3xl">
+            <h2 className="relative mb-3 font-serif text-2xl font-semibold text-[#fffcf6] sm:text-3xl">
               准备好升级你的知识工作流？
             </h2>
-            <p className="relative mb-8 text-sm text-indigo-100 sm:text-base">
+            <p className="relative mb-8 text-sm text-stone-200 sm:text-base">
               开源前后端可自建部署；云端一键对接 Java API，即刻启用解析与对话能力。
             </p>
             <motion.div whileHover={reduce ? {} : { scale: 1.04 }} whileTap={reduce ? {} : { scale: 0.98 }} className="relative inline-block">
               <Link
                 href="/register"
-                className="inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-semibold text-indigo-700 shadow-lg transition hover:bg-indigo-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-card px-8 py-3.5 text-sm font-semibold text-primary shadow-lg transition hover:bg-primary-light"
               >
                 免费注册
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
@@ -376,10 +376,10 @@ export function HomeLanding() {
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
-        className="border-t border-zinc-200/80 bg-white/80 py-8 text-center text-xs text-zinc-400 backdrop-blur-sm"
+        className="border-t border-border/90 bg-card/80 py-8 text-center text-xs text-muted-foreground backdrop-blur-sm"
       >
         <p>© 2026 AI 知识图谱笔记 · Next.js 16 · React 19 · TypeScript</p>
-        <p className="mt-1 text-[10px] text-zinc-400/90">图谱可视化 · ECharts · 流式 SSE</p>
+        <p className="mt-1 text-[10px] text-muted-foreground/90">图谱可视化 · ECharts · 流式 SSE</p>
       </motion.footer>
     </>
   );

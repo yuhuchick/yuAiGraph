@@ -56,7 +56,7 @@ export default function NoteDetailPage() {
   }, [noteId, router]);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
+    <div className="relative z-[1] min-h-screen bg-background">
       <AppHeader />
 
       <main className="mx-auto w-full max-w-6xl px-4 py-6">
@@ -119,8 +119,8 @@ export default function NoteDetailPage() {
                 onClick={() => setActiveTab(tab)}
                 className={`rounded-lg px-4 py-1.5 text-xs font-medium transition ${
                   activeTab === tab
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-zinc-500 hover:text-zinc-800"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {tab === "graph" ? "图谱视图" : "节点列表"}

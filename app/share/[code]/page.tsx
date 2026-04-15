@@ -31,13 +31,13 @@ export default function SharedNotePage() {
   }, [code]);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
+    <div className="relative z-[1] min-h-screen bg-background">
       {/* 简洁顶栏 */}
-      <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-border/90 bg-card/90 backdrop-blur-md">
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4">
           <Link href="/" className="group flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white shadow-sm transition group-hover:bg-indigo-500">K</span>
-            <span className="text-sm font-semibold tracking-tight text-zinc-900">知识图谱<span className="text-indigo-600">笔记</span></span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white shadow-sm transition group-hover:bg-primary-hover">K</span>
+            <span className="font-serif text-sm font-semibold tracking-tight text-foreground">知识图谱<span className="text-primary">笔记</span></span>
           </Link>
 
           <div className="flex items-center gap-2">
@@ -45,15 +45,15 @@ export default function SharedNotePage() {
             {data && (
               <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                 data.permission === "edit"
-                  ? "bg-indigo-100 text-indigo-700"
-                  : "bg-zinc-100 text-zinc-600"
+                  ? "bg-primary-light text-primary"
+                  : "bg-muted text-muted-foreground"
               }`}>
                 {data.permission === "edit" ? "✏️ 可交互" : "👁 仅查看"}
               </span>
             )}
             <Link
               href="/register"
-              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-500"
+              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-primary-hover"
             >
               免费注册
             </Link>
@@ -72,7 +72,7 @@ export default function SharedNotePage() {
             <span className="text-5xl">🔗</span>
             <h2 className="text-lg font-semibold text-zinc-800">{error}</h2>
             <p className="text-sm text-zinc-500">该链接可能已过期或被删除</p>
-            <Link href="/" className="mt-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500">
+            <Link href="/" className="mt-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-hover">
               回到首页
             </Link>
           </div>
@@ -99,12 +99,12 @@ export default function SharedNotePage() {
             <NoteGraphStack data={data.graph} svgId="shared-graph-svg" />
 
             {/* 引导注册 */}
-            <div className="mt-8 rounded-2xl border border-indigo-100 bg-indigo-50 px-6 py-5 text-center">
-              <p className="text-sm font-medium text-indigo-900">想创建属于自己的知识图谱？</p>
-              <p className="mt-1 text-xs text-indigo-700">上传文档，AI 自动解析，免费使用</p>
+            <div className="mt-8 rounded-2xl border border-primary/20 bg-primary-light/80 px-6 py-5 text-center">
+              <p className="text-sm font-medium text-foreground">想创建属于自己的知识图谱？</p>
+              <p className="mt-1 text-xs text-primary">上传文档，AI 自动解析，免费使用</p>
               <Link
                 href="/register"
-                className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-hover"
               >
                 免费注册
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none">

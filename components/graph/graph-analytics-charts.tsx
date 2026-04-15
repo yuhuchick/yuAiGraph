@@ -37,7 +37,7 @@ function AnalyticsTableBlock({ columns, rows }: { columns: string[]; rows: strin
           {rows.map((row, ri) => (
             <tr
               key={ri}
-              className="border-b border-zinc-100 bg-white/80 last:border-0 hover:bg-indigo-50/40"
+              className="border-b border-border bg-card/80 last:border-0 hover:bg-primary-light/50"
             >
               {row.map((cell, ci) => (
                 <td key={ci} className="max-w-[min(28rem,40vw)] px-3 py-2 align-top text-zinc-600 break-words">
@@ -149,9 +149,9 @@ export function GraphAnalyticsCharts({ data }: Props) {
             {insightPanels.map((panel, pi) => (
               <article
                 key={`insight-${panel.spec.id}-${pi}`}
-                className="overflow-hidden rounded-2xl border border-indigo-200/60 bg-white shadow-sm"
+                className="overflow-hidden rounded-2xl border border-primary/25 bg-card shadow-sm"
               >
-                <header className="border-b border-zinc-100 bg-indigo-50/40 px-4 py-2.5">
+                <header className="border-b border-border bg-primary-light/50 px-4 py-2.5">
                   <h4 className="text-sm font-medium text-zinc-800">{panel.spec.title}</h4>
                   {panel.spec.rationale ? (
                     <p className="mt-0.5 text-xs text-zinc-500">{panel.spec.rationale}</p>

@@ -23,13 +23,13 @@ interface Props {
 export function GitHubRepoLinks({ compact = false, className = "" }: Props) {
   return (
     <div
-      className={`flex items-center gap-0.5 border-l border-zinc-200 pl-2 ${className}`.trim()}
+      className={`flex items-center gap-0.5 border-l border-border pl-2 ${className}`.trim()}
     >
       <a
         href={GITHUB_FRONTEND_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800"
+        className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
         title="前端：yuAiGraph（Next.js）"
         aria-label="在 GitHub 打开前端仓库 yuAiGraph"
       >
@@ -40,7 +40,7 @@ export function GitHubRepoLinks({ compact = false, className = "" }: Props) {
         href={GITHUB_BACKEND_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-800"
+        className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
         title="后端：yuAiGraph-back（Spring Boot）"
         aria-label="在 GitHub 打开后端仓库 yuAiGraph-back"
       >

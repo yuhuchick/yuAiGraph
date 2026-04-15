@@ -1,26 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8f9fb;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --border: #e4e7ed;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: #eef2ff;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  --background: #ede8df;
+  --foreground: #1c1917;
+  --card: #fffcf6;
+  --border: #d4cdc2;
+  --muted: #e7e2d8;
+  --muted-foreground: #57534e;
+  --primary: #9a3412;
+  --primary-hover: #7c2d12;
+  --primary-light: #fff7ed;
+  --accent: #166534;
+  --accent-light: #dcfce7;
+  --ring-primary: rgba(154, 52, 18, 0.22);
+  --success: #15803d;
+  --warning: #b45309;
+  --danger: #b91c1c;
   --radius: 12px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-light: var(--primary-light);
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --font-sans: "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-display), "Noto Serif SC", "Songti SC", serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
 }
 
 *,
@@ -38,8 +51,20 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  font-family: "Noto Sans SC", ui-sans-serif, system-ui, sans-serif;
   line-height: 1.6;
+}
+
+/* 轻量纸感颗粒（固定层，不阻挡点击） */
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Custom scrollbar */
@@ -51,11 +76,11 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #a8a29e;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #78716c;
 }
 
 /* Animations */
@@ -77,11 +102,11 @@ body {
   100% { transform: translateX(200%); }
 }
 
-/* 首页 Hero 科技网格底纹 */
+/* 首页 / 仪表盘 底纹：暖色坐标纸 */
 .home-hero-grid {
   background-image:
-    linear-gradient(to right, rgb(99 102 241 / 0.065) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(99 102 241 / 0.065) 1px, transparent 1px);
+    linear-gradient(to right, rgb(154 52 18 / 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(22 101 52 / 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
 }
 
@@ -219,15 +244,15 @@ body {
 
 /* Glass card */
 .glass {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 252, 246, 0.88);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(212, 205, 194, 0.65);
 }
 
-/* Gradient text */
+/* 标题渐变：铜色 → 琥珀 → 松绿 */
 .gradient-text {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+  background: linear-gradient(118deg, #9a3412 0%, #b45309 42%, #166534 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -236,6 +261,6 @@ body {
 /* Focus ring */
 .focus-ring:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-  border-color: #6366f1;
+  box-shadow: 0 0 0 3px var(--ring-primary);
+  border-color: var(--primary);
 }

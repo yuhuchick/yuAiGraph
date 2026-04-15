@@ -121,13 +121,13 @@ export function FileUpload({ onParsed }: Props) {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm"
+      className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm"
     >
-      <h3 className="text-sm font-semibold text-zinc-800">上传文档生成图谱</h3>
+      <h3 className="font-serif text-sm font-semibold text-foreground">上传文档生成图谱</h3>
 
       {/* note name */}
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="note-name" className="text-xs font-medium text-zinc-600">
+        <label htmlFor="note-name" className="text-xs font-medium text-muted-foreground">
           笔记名称
         </label>
         <input
@@ -136,12 +136,12 @@ export function FileUpload({ onParsed }: Props) {
           onChange={(e) => setNoteName(e.target.value)}
           placeholder="例如：机器学习入门"
           disabled={isParsing}
-          className="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
+          className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
         />
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="note-category" className="text-xs font-medium text-zinc-600">
+        <label htmlFor="note-category" className="text-xs font-medium text-muted-foreground">
           分类
         </label>
         <select
@@ -149,7 +149,7 @@ export function FileUpload({ onParsed }: Props) {
           value={category}
           onChange={(e) => setCategory(e.target.value)}
           disabled={isParsing}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
+          className="rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
         >
           {NOTE_CATEGORIES.map((c) => (
             <option key={c.value || "none"} value={c.value}>
@@ -163,12 +163,12 @@ export function FileUpload({ onParsed }: Props) {
       <div
         className={`relative flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed py-8 transition ${
           isParsing
-            ? "pointer-events-none border-indigo-200 bg-indigo-50/40"
+            ? "pointer-events-none border-primary/30 bg-primary-light/50"
             : dragging
-            ? "border-indigo-400 bg-indigo-50"
+            ? "border-primary bg-primary-light"
             : file
-            ? "border-emerald-300 bg-emerald-50"
-            : "border-zinc-200 bg-zinc-50 hover:border-zinc-300 hover:bg-zinc-100"
+            ? "border-accent/40 bg-accent-light/60"
+            : "border-border bg-muted/50 hover:border-primary/25 hover:bg-muted"
         }`}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}
@@ -184,22 +184,22 @@ export function FileUpload({ onParsed }: Props) {
         />
         {isParsing ? (
           <>
-            <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-indigo-400 border-t-transparent" />
-            <span className="text-sm text-indigo-600">正在解析中，请稍候...</span>
+            <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <span className="text-sm text-primary">正在解析中，请稍候...</span>
           </>
         ) : file ? (
           <>
             <span className="text-3xl">{EXT_ICONS[getExt(file.name)] ?? "📁"}</span>
-            <span className="text-sm font-medium text-zinc-800">{file.name}</span>
-            <span className="text-xs text-zinc-500">{formatBytes(file.size)}</span>
+            <span className="text-sm font-medium text-foreground">{file.name}</span>
+            <span className="text-xs text-muted-foreground">{formatBytes(file.size)}</span>
           </>
         ) : (
           <>
             <span className="text-3xl">☁️</span>
-            <span className="text-sm text-zinc-600">
+            <span className="text-sm text-muted-foreground">
               {dragging ? "松开以上传" : "拖拽文件至此，或点击选择"}
             </span>
-            <span className="text-xs text-zinc-400">支持 PDF、Word、TXT，最大 100MB</span>
+            <span className="text-xs text-muted-foreground/80">支持 PDF、Word、TXT，最大 100MB</span>
           </>
         )}
       </div>
@@ -211,7 +211,7 @@ export function FileUpload({ onParsed }: Props) {
       <button
         type="submit"
         disabled={!canSubmit}
-        className="flex items-center justify-center gap-2 rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
         {submitting ? (
           <>

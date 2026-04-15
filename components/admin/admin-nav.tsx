@@ -20,8 +20,8 @@ export function AdminNav() {
             href={item.href}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
               active
-                ? "bg-indigo-50 text-indigo-700"
-                : "border border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                ? "bg-primary-light text-primary"
+                : "border border-border text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
             {item.label}

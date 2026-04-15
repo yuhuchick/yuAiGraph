@@ -124,7 +124,7 @@ export function VoiceQA({ noteId, suggestions: suggestionsProp, welcomeMessage }
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm">
       {/* header */}
       <div className="flex items-center gap-2 border-b border-zinc-100 px-4 py-2.5">
-        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-xs">✦</span>
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-light text-xs text-primary">✦</span>
         <h3 className="text-sm font-semibold text-zinc-800">AI 知识问答</h3>
         <span className="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">在线</span>
       </div>
@@ -141,7 +141,7 @@ export function VoiceQA({ noteId, suggestions: suggestionsProp, welcomeMessage }
               className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                 msg.role === "user"
                   ? "bg-zinc-800 text-white"
-                  : "bg-indigo-100 text-indigo-700"
+                  : "bg-primary-light text-primary"
               }`}
             >
               {msg.role === "user" ? "我" : "✦"}
@@ -166,7 +166,7 @@ export function VoiceQA({ noteId, suggestions: suggestionsProp, welcomeMessage }
                 <>
                   <AssistantMarkdown content={msg.content} streaming={msg.streaming} />
                   {msg.streaming && (
-                    <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-indigo-500 align-middle" />
+                    <span className="ml-0.5 inline-block h-3.5 w-0.5 animate-pulse bg-primary align-middle" />
                   )}
                 </>
               ) : (
@@ -185,7 +185,7 @@ export function VoiceQA({ noteId, suggestions: suggestionsProp, welcomeMessage }
             <button
               key={s}
               onClick={() => send(s)}
-              className="rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-600 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+              className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-muted-foreground transition hover:border-primary/35 hover:bg-primary-light hover:text-primary"
             >
               {s}
             </button>
@@ -201,7 +201,7 @@ export function VoiceQA({ noteId, suggestions: suggestionsProp, welcomeMessage }
           onChange={(e) => setInput(e.target.value)}
           placeholder="输入问题，按 Enter 发送..."
           disabled={loading}
-          className="flex-1 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
+          className="flex-1 rounded-xl border border-border bg-muted px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-card focus:ring-2 focus:ring-primary/15 disabled:opacity-60"
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();

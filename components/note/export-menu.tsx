@@ -120,7 +120,7 @@ export function ExportMenu({ noteName, graphData, svgId }: Props) {
                 type="button"
                 onClick={() => void exportPdf()}
                 disabled={busy}
-                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-indigo-800 hover:bg-indigo-50 disabled:opacity-50"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs text-primary hover:bg-primary-light disabled:opacity-50"
               >
                 <span className="text-sm">📕</span>
                 <span>
