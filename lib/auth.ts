@@ -95,6 +95,27 @@ export function saveAuth(token: string, user: UserInfo): void {
   setUser(user);
 }
 
+/**
+ * 登录/注册成功后的站内跳转。
+ * 使用整页导航（非 client router），确保 `document.cookie` 已落盘后再请求受保护路由；
+ * 否则软导航时 middleware 可能读不到 `kg_logged_in`，表现为登录成功却不进入仪表盘。
+ * @param redirectPath 查询参数 `redirect`，仅允许以 `/` 开头的站内路径
+ */
+export function navigateAfterAuth(redirectPath: string | null | undefined): void {
+  if (typeof window === "undefined") return;
+  const fallback = "/dashboard";
+  const raw = redirectPath?.trim();
+  if (!raw) {
+    window.location.assign(fallback);
+    return;
+  }
+  if (!raw.startsWith("/") || raw.startsWith("//") || raw.includes("://")) {
+    window.location.assign(fallback);
+    return;
+  }
+  window.location.assign(raw);
+}
+
 /** 退出登录（仅清本地状态，不跳转） */
 export function logout(): void {
   sessionRedirecting = false;

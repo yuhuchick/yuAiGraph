@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { FormEvent, Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { saveAuth } from "@/lib/auth";
+import { useSearchParams } from "next/navigation";
+import { navigateAfterAuth, saveAuth } from "@/lib/auth";
 import { api, ApiError } from "@/lib/api";
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +22,7 @@ function LoginForm() {
     try {
       const data = await api.login(email, password);
       saveAuth(data.token, data.user);
-      router.push(searchParams.get("redirect") ?? "/dashboard");
+      navigateAfterAuth(searchParams.get("redirect"));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "网络错误，请检查后端服务是否启动");
     } finally {

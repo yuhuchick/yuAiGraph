@@ -2,12 +2,10 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { saveAuth } from "@/lib/auth";
+import { navigateAfterAuth, saveAuth } from "@/lib/auth";
 import { api, ApiError } from "@/lib/api";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +31,7 @@ export default function RegisterPage() {
     try {
       const data = await api.register(username, email, password);
       saveAuth(data.token, data.user);
-      router.push("/dashboard");
+      navigateAfterAuth(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "网络错误，请检查后端服务是否启动");
     } finally {
